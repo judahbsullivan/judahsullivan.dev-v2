@@ -10,6 +10,5 @@ export default function Template({
 }: {
   children: ReactNode;
 }) {
-  console.log("Template Layout Is Active")
   return <>{children}</>
 }
