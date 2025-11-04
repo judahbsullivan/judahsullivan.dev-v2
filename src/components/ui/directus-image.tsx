@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { getImage, fileUrl, getThumbnail } from "@/directus/queries/file";
 import type { DirectusFiles } from "@/directus/utils/types";
 
-interface DirectusImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface DirectusImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   image?: DirectusFiles;
   imageId?: string;
   alt?: string;
@@ -72,7 +72,10 @@ export function DirectusImage({
 
       try {
         const src = await getThumbnail(resolvedImageId, { format: "webp", width, height });
-        setImageSrc(src);
+        // Ensure src is a string
+        if (typeof src === 'string') {
+          setImageSrc(src);
+        }
       } catch (error) {
         console.error("Error getting thumbnail:", error);
       }
@@ -125,7 +128,7 @@ export function DirectusImage({
   if (fillContainer) {
     return (
       <Image
-        src={imageSrc}
+        src={imageSrc as unknown as string}
         alt={alt}
         width={imageWidth}
         height={imageHeight}
@@ -139,7 +142,7 @@ export function DirectusImage({
   return (
     <div className={`directus-image-container overflow-hidden ${maskClass} ${scrollClass} ${animateClass} simple-mask-container`}>
       <Image
-        src={imageSrc}
+        src={imageSrc as unknown as string}
         alt={alt}
         width={imageWidth}
         height={imageHeight}

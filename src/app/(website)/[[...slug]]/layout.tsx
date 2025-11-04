@@ -5,9 +5,10 @@ import { getNavigationItems } from "@/directus/queries/navigation";
 
 export default async function SiteLayout({
   children,
+  params,
 }: {
   children: ReactNode;
-  params?: Promise<{ slug: [] }>;
+  params?: Promise<{ slug?: string[] }>;
 }) {
   let navItems = null;
   try {

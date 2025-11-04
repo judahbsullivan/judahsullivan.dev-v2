@@ -11,7 +11,7 @@ export const Icon = forwardRef<SVGSVGElement, IconProps>(
   function Icon({ name, size = 24, className = '', color, ...props }, ref) {
     // Extract icon name (remove 'lucide:' prefix if present)
     const iconName = name.includes(':') ? name.split(':')[1] : name;
-    const IconComponent = (LucideIcons as any)[iconName] as React.ComponentType<React.SVGProps<SVGSVGElement>> | undefined;
+    const IconComponent = (LucideIcons as any)[iconName] as React.ComponentType<React.SVGProps<SVGSVGElement> & { size?: string | number }> | undefined;
     
     if (!IconComponent) {
       console.warn(`Icon "${iconName}" not found in lucide-react`);

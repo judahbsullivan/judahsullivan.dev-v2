@@ -95,6 +95,8 @@ function BlockForm({ meta_header_block_form, tagline, headline, form }: BlockFor
             const { id, label, name, placeholder, required, type } = field;
             if (!name) return null;
 
+            const isRequired = required ?? false;
+
             return (
               <div key={id} id={id}>
                 {label && (
@@ -107,7 +109,7 @@ function BlockForm({ meta_header_block_form, tagline, headline, form }: BlockFor
                     id={name}
                     name={name}
                     placeholder={placeholder ?? ''}
-                    required={required}
+                    required={isRequired}
                     className="block w-full border border-gray-300 rounded-md px-3 py-2"
                     rows={4}
                   />
@@ -117,7 +119,7 @@ function BlockForm({ meta_header_block_form, tagline, headline, form }: BlockFor
                     id={name}
                     name={name}
                     placeholder={placeholder ?? ''}
-                    required={required}
+                    required={isRequired}
                     className="block w-full border border-gray-300 rounded-md px-3 py-2"
                   />
                 )}

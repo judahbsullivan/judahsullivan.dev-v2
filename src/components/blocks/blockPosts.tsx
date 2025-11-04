@@ -41,7 +41,7 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
   // Use layouts prop for initial render (server-side), fallback to 'mason'
   // This ensures server and client render the same initially
   // TODO: Carousel temporarily disabled - planning phase
-  const defaultLayout = (layouts === 'carousel' ? 'mason' : layouts) || 'mason';
+  const defaultLayout = layouts || 'mason';
   const [currentLayout, setCurrentLayout] = useState<string>(defaultLayout);
   const [normalized, setNormalized] = useState<CardItem[]>(initialNormalized || []);
   const [isBlogOrProjectsPage, setIsBlogOrProjectsPage] = useState(false);
@@ -352,7 +352,7 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
           gsap.set(newElement, { clearProps: "transform,scale" });
         }
       });
-    }, null, "+=0.05"); // Small delay to ensure DOM is ready
+    }, undefined, "+=0.05"); // Small delay to ensure DOM is ready
   };
 
   return (

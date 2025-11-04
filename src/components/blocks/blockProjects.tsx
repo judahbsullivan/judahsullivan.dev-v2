@@ -25,6 +25,15 @@ interface BlockProjectsProps extends BlockCollectionType {
 function BlockProjects({ headline, tagline, limit, collection, projects = [] }: BlockProjectsProps) {
   const blockRef = useRef<HTMLElement>(null);
 
+  // Helper to extract image ID from cover_image which can be string or DirectusFiles object
+  const getImageId = (coverImage: Projects['cover_image']): string | null => {
+    if (!coverImage) return null;
+    if (typeof coverImage === 'string') return coverImage;
+    // Type assertion needed due to Directus type intersection (string & DirectusFiles)
+    const imageObj = coverImage as unknown as { id?: string };
+    return imageObj?.id && typeof imageObj.id === 'string' ? imageObj.id : null;
+  };
+
   useGSAP(() => {
     const block = blockRef.current;
     if (!block) return;
@@ -153,9 +162,9 @@ function BlockProjects({ headline, tagline, limit, collection, projects = [] }: 
             <div id="project-preview-slider" data-count={projects.length} className="relative transition-transform duration-500 ease-out flex flex-col-reverse">
               {projects.map((p) => (
                 <div key={p.id} className="h-36 w-56">
-                  {p.cover_image && (
+                  {p.cover_image && getImageId(p.cover_image) && (
                     <DirectusImage 
-                      imageId={typeof p.cover_image === 'string' ? p.cover_image : p.cover_image.id} 
+                      imageId={getImageId(p.cover_image)!} 
                       alt={p.title || 'Preview image'} 
                       className="h-full w-full object-cover" 
                     />
@@ -176,7 +185,7 @@ function BlockProjects({ headline, tagline, limit, collection, projects = [] }: 
                 slug={project.slug || null}
                 title={project.title || null}
                 description={project.description || null}
-                image={project.cover_image ? (typeof project.cover_image === 'string' ? project.cover_image : project.cover_image.id) : null}
+                image={getImageId(project.cover_image)}
                 published_at={project.date_created || null}
               />
             </div>

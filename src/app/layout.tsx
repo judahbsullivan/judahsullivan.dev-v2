@@ -9,14 +9,12 @@ import "@/styles/globals.css";
 
 export default async function RootLayout({
   children,
-  lang,
 }: {
   children: ReactNode;
-  lang: string | "en";
 }) {
   return (
     <html
-      lang={lang}
+      lang="en"
     >
       <body>
         {children}

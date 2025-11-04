@@ -6,11 +6,8 @@ import { Headline } from '@/components/ui/headline';
 import { PillLink } from '@/components/ui/pill-link';
 import { useTextAnimations } from '@/hooks/useTextAnimations';
 import type { BlockButton, BlockHero as BlockHeroType } from '@/directus/utils/types';
-import type { DirectusUser } from '@directus/sdk';
 
-interface BlockHeroProps extends BlockHeroType {
-  user_created?: DirectusUser;
-}
+interface BlockHeroProps extends Omit<BlockHeroType, 'user_created' | 'user_updated'> {}
 
 function BlockHero({
   tagline,
@@ -18,7 +15,6 @@ function BlockHero({
   description,
   button_group,
   image,
-  user_created,
 }: BlockHeroProps) {
   const buttons: BlockButton[] = Array.isArray(button_group && button_group.buttons)
     ? (button_group!.buttons as BlockButton[])

@@ -30,9 +30,17 @@ export async function generateMetadata({
       };
     }
 
+    const seoDescription = 
+      page.seo && 
+      typeof page.seo === 'object' && 
+      'seo_description' in page.seo && 
+      typeof page.seo.seo_description === 'string'
+        ? page.seo.seo_description
+        : null;
+
     return {
       title: page.title || "Untitled Page",
-      description: page?.seo?.seo_description || page.title || "No description available",
+      description: seoDescription || page.title || "No description available",
     };
   } catch (error) {
     console.error("Error generating metadata:", error);
