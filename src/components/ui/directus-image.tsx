@@ -42,7 +42,10 @@ export function DirectusImage({
   const resolvedImageId = rawId ?? image?.id;
 
   useEffect(() => {
-    if (!resolvedImageId) return;
+    // Validate resolvedImageId is not empty (empty string is truthy but invalid)
+    if (!resolvedImageId || (typeof resolvedImageId === 'string' && resolvedImageId.trim() === '')) {
+      return;
+    }
 
     const loadImage = async () => {
       let width = overrideWidth ?? image?.width ?? undefined;
@@ -113,7 +116,14 @@ export function DirectusImage({
     }
   }, [useSimpleMask, disableMask]);
 
-  if (!resolvedImageId || !imageSrc || !imageWidth || !imageHeight) {
+  // Validate all required values are present and valid
+  if (
+    !resolvedImageId || 
+    (typeof resolvedImageId === 'string' && resolvedImageId.trim() === '') ||
+    !imageSrc || 
+    !imageWidth || 
+    !imageHeight
+  ) {
     return null;
   }
 
