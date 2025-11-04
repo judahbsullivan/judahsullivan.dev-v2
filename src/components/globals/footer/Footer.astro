@@ -1,0 +1,46 @@
+---
+import Button from '@/components/ui/Button.astro';
+const props = Astro.props;
+
+const {footer, user_created} = props;
+const today = new Date().getFullYear();
+---
+
+<footer
+  class="
+    min-h-screen
+    bg-foreground  flex items-center justify-between
+    text-secondary
+  px-6
+    flex-col 
+  "
+>
+  <div class="w-full  text-center  items-center-safe flex flex-col gap-24 pt-12"> 
+
+        <h1 class="hero-headline tracking-tighter text-6xl md:text-[10vw]  text-pretty break-keep leading-[.99] inline-block uppercase text-center">
+      Lets Work Together!</h1>
+<div class="flex items-center gap-6 md:gap-10 text-xl text-center md:text-2xl flex-wrap capitalize">
+          <a  
+            target="_blank"
+            href="https://linkedin.com/in/judahsullivan">Linkedin</a>
+          <a  
+            target="_blank"
+            href="https://profile.indeed.com/?hl=en_US&co=US&from=gnav-homepage">Indeed</a>
+          <a  
+            target="_blank"
+            href="https://youtube.com/judahsullivan">YouTube</a>
+          <a 
+            target="_blank"
+            href="https://github.com/judahbsullivan">Github</a>
+        </div>
+  </div>
+
+  <div class="w-full flex-col md:flex-row flex justify-between items-center py-6 text-lg">
+    <p class="">Authored By: Judah Sullivan</p>
+    <div class="flex  items-center gap-6">
+          <p class="relative">Copyright <span class="text-xs -right-3 absolute">©</span> </p>
+          <p class=""> {today}</p>
+    </div>
+  </div>
+</footer>
+

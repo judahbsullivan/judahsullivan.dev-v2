@@ -1,0 +1,126 @@
+---
+import type { Navigation } from '@/types/directusCollection';
+
+const { navItems } = Astro.props as { navItems: Navigation };
+const currentPath = (Astro.url && typeof Astro.url.pathname === 'string') ? Astro.url.pathname : '/';
+---
+<button id="nav-btn" class="flex gap-1.5 bg-black rounded-full bg-blend-difference items-center justify-center flex-col w-12 h-12 p-2 z-[60] relative">
+  <span class="line top border bg-black w-full bg-blend-difference"></span>
+  <span class="line middle border bg-black w-full bg-blend-difference"></span>
+  <span class="line bottom border bg-black w-full bg-blend-difference"></span>
+</button>
+
+<div
+  id="mobile-nav"
+  class="fixed min-h-[100dvh] left-full top-0 w-full z-50 bg-black text-white px-6 py-10"
+>
+  <ul class="space-y-8 items-left h-screen justify-center gap-24 flex flex-col text-left">
+    {navItems?.items?.map((item: any) => {
+    const href =
+      item.url ||
+        (typeof item.page === 'object' && item.page?.permalink) ||
+        (typeof item.post === 'object' && item.post?.slug ? `/post/${item.post.slug}` : null) ||
+        '#';
+    const isActive = href && currentPath === href;
+    return (
+    <li id={item.id}>
+      <a href={href} class={`nav-link group block uppercase text-white ${isActive ? 'active' : ''}`}>
+        <span class="flip-wrap inline-block">
+          <span class="flip-front inline-block">{item.title}</span>
+          <span class="flip-back inline-block" aria-hidden="true">{item.title}</span>
+        </span>
+      </a>
+    </li>
+    );
+    })}
+  </ul>
+
+</div>
+<script>
+import gsap from 'gsap';
+
+const navBtn = document.querySelectorAll('#nav-btn');
+const navPanel = document.getElementById('mobile-nav');
+const links = document.querySelectorAll('.nav-link');
+const tl = gsap.timeline({ paused: true, reversed: true });
+let isToggle = false;
+const lines = {
+  top: document.querySelector('.line.top'),
+  middle: document.querySelector('.line.middle'),
+  bottom: document.querySelector('.line.bottom'),
+};
+
+tl.to(navPanel, {
+  x: '-100%',
+  duration: 0.8,
+  ease: 'power4.inOut',
+})
+  .to(navBtn, {
+    rotation: 90,
+    duration: 0.8,
+    ease: 'power4.inOut',
+  }, 0)
+  .from(links, {
+    y: 50,
+    opacity: 0,
+    duration: 0.4,
+    stagger: 0.1,
+    ease: 'power2.out',
+  }) 
+  .to(lines.top, { y: 7, rotate: 45, transformOrigin: 'center', duration: 0.4, ease: 'power2.inOut' }, 0)
+  .to(lines.middle, { opacity: 0, duration: 0.3, ease: 'power2.inOut' }, 0)
+  .to(lines.bottom, { y: -7, rotate: -45, transformOrigin: 'center', duration: 0.4, ease: 'power2.inOut' }, 0)
+  .to(navBtn,{ background: 'white' },0);
+
+navBtn.forEach(btn =>
+  btn.addEventListener('click', () => {
+    isToggle = !isToggle;
+    isToggle ? (
+      tl.play(),
+      document.body.style.overflow = 'hidden',
+      document.body.classList.add('menu-open')
+    ) : (
+        tl.reverse(),
+        document.body.style.overflow = 'auto',
+        document.body.classList.remove('menu-open')
+      );
+  })
+);
+
+// Flip animation on hover (no scaling)
+links.forEach(link => {
+  const wrap = link.querySelector('.flip-wrap');
+  const front = link.querySelector('.flip-front');
+  const back = link.querySelector('.flip-back');
+  if (!wrap || !front || !back) return;
+
+  link.addEventListener('mouseenter', () => {
+    gsap.set(back, { rotationX: -90, transformOrigin: '50% 50% -0.01px' });
+    gsap.to(front, { rotationX: 90, duration: 0.35, ease: 'power2.in', transformOrigin: '50% 50% -0.01px' });
+    gsap.to(back, { rotationX: 0, duration: 0.5, ease: 'power3.out', delay: 0.15 });
+  });
+  link.addEventListener('mouseleave', () => {
+    gsap.to(back, { rotationX: -90, duration: 0.3, ease: 'power2.in' });
+    gsap.to(front, { rotationX: 0, duration: 0.4, ease: 'power3.out', delay: 0.05 });
+  });
+
+  // Close menu when link is clicked
+  link.addEventListener('click', () => {
+    if (isToggle) {
+      isToggle = false;
+      tl.reverse();
+      document.body.style.overflow = 'auto';
+      document.body.classList.remove('menu-open');
+    }
+  });
+});
+</script>
+
+<style>
+  .nav-link { font-size: clamp(2.75rem, 5vw, 5rem); line-height: 1; }
+  .nav-link.active .flip-front { text-decoration: underline; }
+  .flip-wrap { perspective: 1000px; }
+  .flip-front, .flip-back { display: inline-block; will-change: transform; backface-visibility: hidden; }
+  .flip-back { position: absolute; left: 0; top: 0; }
+</style>
+
