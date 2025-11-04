@@ -42,10 +42,13 @@ export function DirectusImage({
   const resolvedImageId = rawId ?? image?.id;
 
   useEffect(() => {
-    // Validate resolvedImageId is not empty (empty string is truthy but invalid)
-    if (!resolvedImageId || (typeof resolvedImageId === 'string' && resolvedImageId.trim() === '')) {
+    // Validate resolvedImageId is a non-empty string
+    if (typeof resolvedImageId !== 'string' || resolvedImageId.trim() === '') {
       return;
     }
+
+    // TypeScript narrowing: at this point resolvedImageId is definitely a non-empty string
+    const imageId = resolvedImageId;
 
     const loadImage = async () => {
       let width = overrideWidth ?? image?.width ?? undefined;
@@ -54,7 +57,7 @@ export function DirectusImage({
 
       if (width === undefined || height === undefined) {
         try {
-          const fetched = await getImage(resolvedImageId);
+          const fetched = await getImage(imageId);
           width = fetched?.width ?? 1;
           height = fetched?.height ?? 1;
           if (!altText && fetched?.description) altText = fetched.description;
@@ -74,7 +77,7 @@ export function DirectusImage({
       setAlt(altText);
 
       try {
-        const src = await getThumbnail(resolvedImageId, { format: "webp", width, height });
+        const src = await getThumbnail(imageId, { format: "webp", width, height });
         // Ensure src is a string
         if (typeof src === 'string') {
           setImageSrc(src);
@@ -118,14 +121,18 @@ export function DirectusImage({
 
   // Validate all required values are present and valid
   if (
-    !resolvedImageId || 
-    (typeof resolvedImageId === 'string' && resolvedImageId.trim() === '') ||
+    typeof resolvedImageId !== 'string' || 
+    resolvedImageId.trim() === '' ||
     !imageSrc || 
+    typeof imageSrc !== 'string' ||
     !imageWidth || 
     !imageHeight
   ) {
     return null;
   }
+
+  // TypeScript narrowing: at this point imageSrc is definitely a string
+  const imageSrcString: string = imageSrc;
 
   const maskClass = disableMask 
     ? '' 
@@ -138,7 +145,7 @@ export function DirectusImage({
   if (fillContainer) {
     return (
       <Image
-        src={imageSrc as unknown as string}
+        src={imageSrcString}
         alt={alt}
         width={imageWidth}
         height={imageHeight}
@@ -152,7 +159,7 @@ export function DirectusImage({
   return (
     <div className={`directus-image-container overflow-hidden ${maskClass} ${scrollClass} ${animateClass} simple-mask-container`}>
       <Image
-        src={imageSrc as unknown as string}
+        src={imageSrcString}
         alt={alt}
         width={imageWidth}
         height={imageHeight}

@@ -17,15 +17,31 @@ type CardItem = {
   published_at?: string | null;
 };
 
+// Helper function to extract image ID from cover_image or image field
+function getImageId(imageValue: unknown): string | null {
+  if (!imageValue) return null;
+  if (typeof imageValue === 'string') {
+    return imageValue.trim() === '' ? null : imageValue;
+  }
+  if (typeof imageValue === 'object' && imageValue && 'id' in imageValue) {
+    const id = (imageValue as { id?: unknown }).id;
+    return typeof id === 'string' && id.trim() !== '' ? id : null;
+  }
+  return null;
+}
+
 // Helper function to normalize items
 function normalizeItems(items: Posts[] | Projects[], collection: string | null): CardItem[] {
   return items.map((item) => {
     const isProject = collection === 'projects' || collection === 'project';
+    const imageValue = isProject ? (item as Projects).cover_image : (item as Posts).image;
+    const imageId = getImageId(imageValue);
+    
     return {
       slug: item.slug,
       title: item.title,
       description: item.description,
-      image: isProject ? (item as Projects).cover_image : (item as Posts).image,
+      image: imageId,
       published_at: isProject ? (item as Projects).date_created : (item as Posts).published_at
     };
   });
