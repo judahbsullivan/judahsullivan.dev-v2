@@ -10,9 +10,9 @@ export const PillLink = forwardRef<HTMLAnchorElement, PillLinkProps>(
   function PillLink({ href, label, className, children, ...rest }, ref) {
     const classes = tw(
       "inline-flex items-center gap-2 px-6 py-3 rounded-full border relative overflow-hidden",
-      "border-neutral-800 bg-neutral-900/50 text-white",
+      "border-neutral-800 bg-neutral-900 text-white",
       "uppercase tracking-wide text-sm md:text-base",
-      "hover:border-neutral-700 transition-colors duration-200",
+      "hover:border-neutral-700 hover:bg-neutral-800 transition-colors duration-200",
       "group",
       className
     );
