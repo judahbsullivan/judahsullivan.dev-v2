@@ -22,12 +22,16 @@ interface LinkBoxProps {
 }
 
 function LinkBox({ Icon, href }: LinkBoxProps) {
+  // Extract icon name from component displayName or name for accessibility
+  const iconName = Icon.displayName || Icon.name || 'Technology link';
+  
   return (
     <a
       href={href}
       className="relative grid h-20 w-full place-content-center sm:h-28 md:h-36 hover:bg-neutral-900 transition-colors"
+      aria-label={iconName}
     >
-      <Icon className="text-xl sm:text-3xl lg:text-4xl" />
+      <Icon className="text-xl sm:text-3xl lg:text-4xl" aria-hidden="true" />
     </a>
   );
 }

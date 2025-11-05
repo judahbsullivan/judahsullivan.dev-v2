@@ -150,6 +150,7 @@ export function Table({ posts, className, base = 'post' }: TableProps) {
             href={`/${base}/${post.slug}`}
             className="post-row group relative flex items-baseline justify-between gap-6 py-5"
             data-index={index}
+            aria-label={post.title ? `Read ${post.title}` : `Read ${base} ${index + 1}`}
           >
             <div className="min-w-0">
               <h3 className="truncate text-base font-medium tracking-tight text-gray-900 group-hover:text-blue-600 transition-colors">

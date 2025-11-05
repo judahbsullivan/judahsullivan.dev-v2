@@ -182,9 +182,9 @@ function BlockCollection({ tagline, headline, limit, collection, layouts, normal
           <p className="collection-tagline text-xl text-gray-500 uppercase tracking-wide">{tagline}</p>
         )}
         {headline && (
-          <h4 className="collection-headline text-5xl md:text-[5vw] leading-[.89] uppercase font-light overflow-hidden">
+          <h2 className="collection-headline text-5xl md:text-[5vw] leading-[.89] uppercase font-light overflow-hidden">
             {headline}
-          </h4>
+          </h2>
         )}
       </div>
 

@@ -51,12 +51,11 @@ function BlockDescription({ tagline, headline, description }: BlockDescriptionPr
           <h2 className="text-xl desc-text relative uppercase tracking-wider text-neutral-500 mb-1">
             {tagline}
           </h2>
-          <h4
-            id=""
+          <h3
             className="desc-title text-5xl md:text-[5vw] leading-[.89] uppercase font-light"
           >
             {headline}
-          </h4>
+          </h3>
         </div>
       </div>
       <div className="w-full">

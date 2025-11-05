@@ -82,9 +82,9 @@ function BlockHero({
             <h2 className="hero-tagline text-lg uppercase tracking-wider text-neutral-500 mb-1">
               Software Engineer | Frontend Architect | Digital Craftsman
             </h2>
-            <h4 className="hero-name text-4xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter">
+            <h3 className="hero-name text-4xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter">
               Judah Sullivan
-            </h4>
+            </h3>
             <p className="hero-description">Located Currently in Houston, TX</p>
             <p className="hero-description">Currently Open To Work!</p>
 

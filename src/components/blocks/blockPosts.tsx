@@ -380,8 +380,9 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
                   className={`layouts-btn px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${currentLayout === 'mason' ? 'active bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'} ${isTransitioning ? 'opacity-50 cursor-not-allowed' : ''}`}
                   data-layouts="mason"
                   title="Grid Layout"
+                  aria-label="Switch to grid layout"
                 >
-                  <Icon name="grid-3x3" size={16} />
+                  <Icon name="grid-3x3" size={16} aria-hidden="true" />
                   <span className="hidden sm:inline">Grid</span>
                 </button>
                 <button
@@ -391,8 +392,9 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
                   data-layouts="table"
                   data-desktop-only="true"
                   title="Table Layout"
+                  aria-label="Switch to table layout"
                 >
-                  <Icon name="table" size={16} />
+                  <Icon name="table" size={16} aria-hidden="true" />
                   <span className="hidden sm:inline">Table</span>
                 </button>
                 <button
@@ -401,8 +403,9 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
                   className={`layouts-btn px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2 ${currentLayout === 'parallax' ? 'active bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'} ${isTransitioning ? 'opacity-50 cursor-not-allowed' : ''}`}
                   data-layouts="parallax"
                   title="Parallax Layout"
+                  aria-label="Switch to parallax layout"
                 >
-                  <Icon name="layers" size={16} />
+                  <Icon name="layers" size={16} aria-hidden="true" />
                   <span className="hidden sm:inline">Parallax</span>
                 </button>
                 {/* TODO: Carousel temporarily disabled - planning phase */}

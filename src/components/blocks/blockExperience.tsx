@@ -154,9 +154,9 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
         <h2 className="experience-tagline text-xl relative uppercase tracking-wider text-neutral-500 mb-1">
           {tagline}
         </h2>
-        <h4 className="experience-headline text-5xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter overflow-hidden">
+        <h3 className="experience-headline text-5xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter overflow-hidden">
           {headline}
-        </h4>
+        </h3>
         <div className="flex gap-6 flex-wrap mt-5 max-w-2xl mx-auto justify-center">
           <p className="experience-description text-2xl font-thin">
             {description}
