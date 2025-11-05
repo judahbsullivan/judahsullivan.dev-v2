@@ -15,10 +15,13 @@ export function ItemList(props: ItemListProps) {
       id={`${props?.id}`}
       href={href}
       className="flex py-12 w-full justify-between"
+      aria-label={props?.title ? `Read more about ${props.title}` : 'Read more about this project'}
     >
       <h3 className="text-lg w-1/3 md:text-xl font-medium text-black">{props?.title}</h3>
       <p className="text-sm w-1/3 text-gray-600 translate-2">{props?.description}</p>
-      <div className="text-sm text-gray-500">Read More →</div>
+      <span className="text-sm text-gray-500">
+        {props?.title ? `Read More about ${props.title} →` : 'Read More →'}
+      </span>
       <div></div>
     </a>
   );

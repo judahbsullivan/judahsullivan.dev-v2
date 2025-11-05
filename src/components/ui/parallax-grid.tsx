@@ -402,8 +402,12 @@ export function ParallaxGrid({ posts, className, base = 'post' }: ParallaxGridPr
                 {post.description}
               </p>
               <div className="overflow-hidden">
-                <PillLink href={`/${base}/${post.slug}`} className="parallax-link">
-                  Read More
+                <PillLink 
+                  href={`/${base}/${post.slug}`} 
+                  className="parallax-link"
+                  aria-label={post.title ? `Read more about ${post.title}` : `Read more ${base}`}
+                >
+                  {post.title ? `Read More: ${post.title}` : 'Read More'}
                 </PillLink>
               </div>
             </div>
