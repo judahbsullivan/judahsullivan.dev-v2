@@ -49,7 +49,7 @@ function BlockHeading({ tagline, description, headline }: BlockHeadingProps) {
       <div className="flex h-dvh justify-between flex-col">
         <div>
           {tagline && (
-            <p className="heading-tagline text-sm text-gray-500 uppercase tracking-wide">
+            <p className="heading-tagline text-sm text-gray-600 uppercase tracking-wide">
               {tagline}
             </p>
           )}

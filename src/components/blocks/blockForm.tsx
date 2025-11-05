@@ -79,7 +79,7 @@ function BlockForm({ meta_header_block_form, tagline, headline, form }: BlockFor
         )}
         <div className="text-left">
           {tagline && (
-            <p className="form-tagline text-sm text-gray-500 uppercase tracking-wide">
+            <p className="form-tagline text-sm text-gray-600 uppercase tracking-wide">
               {tagline}
             </p>
           )}

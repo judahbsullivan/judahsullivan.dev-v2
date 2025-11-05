@@ -50,7 +50,7 @@ function BlockRichText({ id, alignment, tagline, headline, content }: BlockRichT
       <div className={tw(`max-w-6xl mx-auto flex flex-col gap-8`, alignmentClass)} id={id || 'blockrichtext'}>
         <div className="w-full md:w-1/2 flex flex-col justify-center space-y-6">
           {tagline && (
-            <p className="richtext-tagline text-sm text-gray-500 uppercase tracking-wide">
+            <p className="richtext-tagline text-sm text-gray-600 uppercase tracking-wide">
               {tagline}
             </p>
           )}

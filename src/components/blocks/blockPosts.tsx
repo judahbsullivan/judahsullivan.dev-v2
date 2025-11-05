@@ -466,7 +466,7 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
           </div>
 
           {(!normalized || normalized.length === 0) && (
-            <div className="mt-8 text-center text-gray-500">
+            <div className="mt-8 text-center text-gray-600">
               <p>No posts found.</p>
               <p className="text-sm mt-2">Collection: {collection || 'None'}, Layouts: {currentLayout}</p>
               <p className="text-sm mt-2">Items count: {normalized?.length || 0}</p>

@@ -151,7 +151,7 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
       className="flex flex-col gap-12 px-6 py-52 text-pretty"
     >
       <header className="w-full text-center">
-        <h2 className="experience-tagline text-xl relative uppercase tracking-wider text-neutral-500 mb-1">
+        <h2 className="experience-tagline text-xl relative uppercase tracking-wider text-neutral-600 mb-1">
           {tagline}
         </h2>
         <h3 className="experience-headline text-5xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter overflow-hidden">
@@ -202,7 +202,7 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
                       <h5 className="timeline-company text-2xl md:text-3xl font-semibold mb-2">
                         {String(job.company || '')}
                       </h5>
-                      <small className="timeline-date text-neutral-500 text-base">
+                      <small className="timeline-date text-neutral-600 text-base">
                         {String(job.date || '')}
                       </small>
                     </div>
@@ -216,7 +216,7 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
                     {(() => {
                       const location = String(job.location || '');
                       return location ? (
-                        <p className="timeline-location text-neutral-500 text-sm mb-4">
+                        <p className="timeline-location text-neutral-600 text-sm mb-4">
                           {location}
                         </p>
                       ) : null;

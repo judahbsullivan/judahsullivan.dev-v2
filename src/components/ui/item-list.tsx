@@ -19,7 +19,7 @@ export function ItemList(props: ItemListProps) {
     >
       <h3 className="text-lg w-1/3 md:text-xl font-medium text-black">{props?.title}</h3>
       <p className="text-sm w-1/3 text-gray-600 translate-2">{props?.description}</p>
-      <span className="text-sm text-gray-500">
+      <span className="text-sm text-gray-600">
         {props?.title ? `Read More about ${props.title} →` : 'Read More →'}
       </span>
       <div></div>

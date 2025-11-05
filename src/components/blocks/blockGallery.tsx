@@ -44,7 +44,7 @@ function BlockGallery({ tagline, headline, items }: BlockGalleryProps) {
   return (
     <section ref={galleryRef} className="py-16 px-4 md:px-12 bg-white">
       <div id="blockgallery" className="w-full md:w-1/2 flex flex-col justify-center space-y-6">
-        {tagline && <p className="gallery-tagline text-sm text-gray-500 uppercase tracking-wide">{tagline}</p>}
+        {tagline && <p className="gallery-tagline text-sm text-gray-600 uppercase tracking-wide">{tagline}</p>}
         {headline && <h1 className="gallery-headline text-4xl font-bold text-gray-900">{headline}</h1>}
       </div>
       <div className="pt-12 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid gap-6">

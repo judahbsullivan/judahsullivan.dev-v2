@@ -164,7 +164,7 @@ export function Table({ posts, className, base = 'post' }: TableProps) {
             </div>
             <div className="flex shrink-0 items-center gap-4 text-sm">
               {post.published_at && (
-                <span className="text-gray-500">
+                <span className="text-gray-600">
                   {new Date(post.published_at).toLocaleDateString()}
                 </span>
               )}

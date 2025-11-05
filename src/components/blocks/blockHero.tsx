@@ -79,7 +79,7 @@ function BlockHero({
 
         <div className="flex gap-2 items-end w-full flex-col">
           <div className="md:w-1/2">
-            <h2 className="hero-tagline text-lg uppercase tracking-wider text-neutral-500 mb-1">
+            <h2 className="hero-tagline text-lg uppercase tracking-wider text-neutral-600 mb-1">
               Software Engineer | Frontend Architect | Digital Craftsman
             </h2>
             <h3 className="hero-name text-4xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter">

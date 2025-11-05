@@ -115,7 +115,7 @@ export function MasonGrid({ posts, className, base = 'post' }: MasonGridProps) {
                     </p>
                   )}
                   {post.published_at && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-600">
                       {new Date(post.published_at).toLocaleDateString()}
                     </div>
                   )}

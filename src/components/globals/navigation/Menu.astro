@@ -4,10 +4,10 @@ import type { Navigation } from '@/types/directusCollection';
 const { navItems } = Astro.props as { navItems: Navigation };
 const currentPath = (Astro.url && typeof Astro.url.pathname === 'string') ? Astro.url.pathname : '/';
 ---
-<button id="nav-btn" class="flex gap-1.5 bg-black rounded-full bg-blend-difference items-center justify-center flex-col w-12 h-12 p-2 z-[60] relative">
-  <span class="line top border bg-black w-full bg-blend-difference"></span>
-  <span class="line middle border bg-black w-full bg-blend-difference"></span>
-  <span class="line bottom border bg-black w-full bg-blend-difference"></span>
+<button id="nav-btn" class="flex gap-1.5 bg-black rounded-full bg-blend-difference items-center justify-center flex-col w-12 h-12 p-2 z-[60] relative" aria-label="Toggle navigation menu">
+  <span class="line top border bg-black w-full bg-blend-difference" aria-hidden="true"></span>
+  <span class="line middle border bg-black w-full bg-blend-difference" aria-hidden="true"></span>
+  <span class="line bottom border bg-black w-full bg-blend-difference" aria-hidden="true"></span>
 </button>
 
 <div

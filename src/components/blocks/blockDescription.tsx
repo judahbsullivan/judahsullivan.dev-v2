@@ -48,7 +48,7 @@ function BlockDescription({ tagline, headline, description }: BlockDescriptionPr
     >
       <div className="w-full flex flex-col justify-start">
         <div className="max-w-6xl">
-          <h2 className="text-xl desc-text relative uppercase tracking-wider text-neutral-500 mb-1">
+          <h2 className="text-xl desc-text relative uppercase tracking-wider text-neutral-600 mb-1">
             {tagline}
           </h2>
           <h3

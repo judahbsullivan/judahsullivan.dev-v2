@@ -117,7 +117,7 @@ function BlockProjects({ headline, tagline, limit, collection, projects = [] }: 
       <div className="space-y-4 overflow-hidden">
         {tagline && (
           <p>
-            <span className="uppercase text-sm text-gray-500 tracking-widest inline-block transition-transform translate-y-full">
+            <span className="uppercase text-sm text-gray-600 tracking-widest inline-block transition-transform translate-y-full">
               {tagline}
             </span>
           </p>

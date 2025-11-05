@@ -159,10 +159,12 @@ export function Menu({ navItems }: MenuProps) {
         ref={navBtnRef}
         id="nav-btn"
         className="flex gap-1.5 bg-black rounded-full bg-blend-difference items-center justify-center flex-col w-12 h-12 p-2 z-[60] relative"
+        aria-label="Toggle navigation menu"
+        aria-expanded={isOpen}
       >
-        <span ref={topLineRef} className="line top border bg-black w-full bg-blend-difference"></span>
-        <span ref={middleLineRef} className="line middle border bg-black w-full bg-blend-difference"></span>
-        <span ref={bottomLineRef} className="line bottom border bg-black w-full bg-blend-difference"></span>
+        <span ref={topLineRef} className="line top border bg-black w-full bg-blend-difference" aria-hidden="true"></span>
+        <span ref={middleLineRef} className="line middle border bg-black w-full bg-blend-difference" aria-hidden="true"></span>
+        <span ref={bottomLineRef} className="line bottom border bg-black w-full bg-blend-difference" aria-hidden="true"></span>
       </button>
 
       <div

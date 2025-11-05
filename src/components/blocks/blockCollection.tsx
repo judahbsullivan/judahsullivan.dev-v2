@@ -179,7 +179,7 @@ function BlockCollection({ tagline, headline, limit, collection, layouts, normal
       {/* Intro */}
       <div className="flex flex-col gap-4">
         {tagline && (
-          <p className="collection-tagline text-xl text-gray-500 uppercase tracking-wide">{tagline}</p>
+          <p className="collection-tagline text-xl text-gray-600 uppercase tracking-wide">{tagline}</p>
         )}
         {headline && (
           <h2 className="collection-headline text-5xl md:text-[5vw] leading-[.89] uppercase font-light overflow-hidden">
