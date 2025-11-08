@@ -32,20 +32,13 @@ export const metadata: Metadata = {
   },
 };
 
-
-
-
-
-
 export default async function RootLayout({
   children,
 }: {
   children: ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-    >
+    <html lang="en">
       <body>
         {children}
         <Analytics />

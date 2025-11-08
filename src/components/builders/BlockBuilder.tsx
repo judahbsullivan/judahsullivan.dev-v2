@@ -1,6 +1,7 @@
 "use client";
 import { lazy, Suspense } from "react";
 import type { PageBlocks } from "@/directus/utils/types";
+import { usePageTransition } from "@/components/globals/PageTransition";
 
 // All block components are Client Components for animations
 const blockComponents = {
@@ -19,6 +20,12 @@ const blockComponents = {
 };
 
 export default function BlockBuilder({ blocks }: { blocks?: PageBlocks[] | null }) {
+  const { isTransitioning } = usePageTransition();
+
+  if (isTransitioning) {
+    return null;
+  }
+
   return (
     <>
       {blocks?.map((block) => {
@@ -26,12 +33,7 @@ export default function BlockBuilder({ blocks }: { blocks?: PageBlocks[] | null 
         const BlockComponent = blockType ? blockComponents[blockType as keyof typeof blockComponents] : null;
         
         if (!BlockComponent) {
-          return (
-            <div key={block.id}>
-              <p>Unknown block type: {blockType}</p>
-              <pre>{JSON.stringify(block.item, null, 2)}</pre>
-            </div>
-          );
+          return null; 
         }
         
         // Extract the actual block data from block.item and spread it as props
@@ -39,7 +41,7 @@ export default function BlockBuilder({ blocks }: { blocks?: PageBlocks[] | null 
         const blockData = (block.item && typeof block.item === 'object') ? block.item : {};
         
         return (
-          <Suspense key={block.id} fallback={<div>Loading...</div>}>
+          <Suspense key={block.id}>
             <BlockComponent {...blockData} />
           </Suspense>
         );

@@ -80,7 +80,7 @@ export function DirectusImage({
         const src = await getThumbnail(imageId, { format: "webp", width, height });
         // Ensure src is a string
         if (typeof src === 'string') {
-          setImageSrc(src);
+        setImageSrc(src);
         }
       } catch (error) {
         console.error("Error getting thumbnail:", error);

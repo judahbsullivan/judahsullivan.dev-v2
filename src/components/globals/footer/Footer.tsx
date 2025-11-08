@@ -1,47 +1,26 @@
 "use client";
 
 import { useRef } from 'react';
-import { useGSAP } from '@gsap/react';
-import gsap from 'gsap';
-import SplitText from 'gsap/SplitText';
-import ScrollTrigger from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(SplitText, ScrollTrigger);
+import { useTextAnimations } from '@/hooks/useTextAnimations';
 
 export function Footer() {
   const footerRef = useRef<HTMLElement>(null);
   const today = new Date().getFullYear();
 
-  useGSAP(() => {
-    const footer = footerRef.current;
-    if (!footer) return;
-
-    const headlineEl = footer.querySelector('.hero-headline');
-    if (headlineEl) {
-      const split = new SplitText(headlineEl as Element, {
-        type: 'chars, words, lines',
-        linesClass: 'line',
-        wordsClass: 'word',
-        charsClass: 'char',
-        mask: 'lines',
-        smartWrap: true,
-      });
-
-      gsap.set(split.chars, { yPercent: 100, opacity: 0 });
-      gsap.to(split.chars, {
-        yPercent: 0,
-        opacity: 1,
-        duration: 0.8,
-        stagger: 0.03,
-        ease: 'power4.out',
-        scrollTrigger: {
-          trigger: footer,
-          start: 'top 80%',
-          once: true,
-        },
-      });
+  // Use headline animation for headline and links, paragraph animation for paragraphs (line-based)
+  // Use animateEach: false so all animations trigger when footer container enters view
+  useTextAnimations(
+    footerRef,
+    [
+      { selector: '.hero-headline', type: 'headline', animateEach: false, position: 0 },
+      { selector: 'a', type: 'headline', animateEach: false, position: 0.2 },
+      { selector: '.footer-text', type: 'paragraph', animateEach: false, position: 0.4 },
+    ],
+    {
+      start: 'top 70%',
+      once: true,
     }
-  }, { scope: footerRef });
+  );
 
   return (
     <footer
@@ -69,12 +48,12 @@ export function Footer() {
       </div>
 
       <div className="w-full flex-col md:flex-row flex justify-between items-center py-6 text-lg">
-        <p>Authored By: Judah Sullivan</p>
+        <p className="footer-text">Authored By: Judah Sullivan</p>
         <div className="flex items-center gap-6">
-          <p className="relative">
+          <p className="footer-text relative">
             Copyright <span className="text-xs -right-3 absolute">©</span>
           </p>
-          <p>{today}</p>
+          <p className="footer-text">{today}</p>
         </div>
       </div>
     </footer>

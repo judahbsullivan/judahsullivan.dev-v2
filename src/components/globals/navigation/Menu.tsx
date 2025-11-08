@@ -1,66 +1,130 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import type { Navigation } from '@/directus/utils/types';
+import SplitText from 'gsap/SplitText';
+import type { Navigation, NavigationItems } from '@/directus/utils/types';
+import { TransitionLink } from '@/components/globals/PageTransition';
+
+gsap.registerPlugin(SplitText);
 
 interface MenuProps {
   navItems: Navigation;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function Menu({ navItems }: MenuProps) {
-  const navBtnRef = useRef<HTMLButtonElement>(null);
+export function Menu({ navItems, isOpen, onClose }: MenuProps) {
   const navPanelRef = useRef<HTMLDivElement>(null);
   const linksRef = useRef<(HTMLAnchorElement | null)[]>([]);
-  const topLineRef = useRef<HTMLSpanElement>(null);
-  const middleLineRef = useRef<HTMLSpanElement>(null);
-  const bottomLineRef = useRef<HTMLSpanElement>(null);
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
-  const isOpenRef = useRef(false);
-  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+
+  // Animate text when menu opens
+  useGSAP(() => {
+    if (!isOpen) return;
+
+    const panel = navPanelRef.current;
+    if (!panel) return;
+
+    // Wait for panel to be visible before animating text
+    const timeoutId = setTimeout(() => {
+      const headings = panel.querySelectorAll('.menu-heading');
+      const navLinks = panel.querySelectorAll('.nav-link');
+      const socialLinks = panel.querySelectorAll('.social-link');
+
+      // Animate headings
+      headings.forEach((heading) => {
+        const split = new SplitText(heading as Element, {
+          type: 'chars, words, lines',
+          linesClass: 'line',
+          wordsClass: 'word',
+          charsClass: 'char',
+          mask: 'lines',
+          smartWrap: true,
+        });
+
+        gsap.set(split.chars, { yPercent: 100, opacity: 0 });
+        gsap.to(split.chars, {
+          yPercent: 0,
+          opacity: 1,
+          duration: 1.2,
+          stagger: 0.04,
+          ease: 'power4.out',
+        });
+      });
+
+      // Animate nav links
+      navLinks.forEach((link) => {
+        const split = new SplitText(link as Element, {
+          type: 'chars, words, lines',
+          linesClass: 'line',
+          wordsClass: 'word',
+          charsClass: 'char',
+          mask: 'lines',
+          smartWrap: true,
+        });
+
+        gsap.set(split.chars, { yPercent: 100, opacity: 0 });
+        gsap.to(split.chars, {
+          yPercent: 0,
+          opacity: 1,
+          duration: 1.2,
+          stagger: 0.04,
+          ease: 'power4.out',
+        });
+      });
+
+      // Animate social links
+      socialLinks.forEach((link) => {
+        const split = new SplitText(link as Element, {
+          type: 'chars, words, lines',
+          linesClass: 'line',
+          wordsClass: 'word',
+          charsClass: 'char',
+          mask: 'lines',
+          smartWrap: true,
+        });
+
+        gsap.set(split.chars, { yPercent: 100, opacity: 0 });
+        gsap.to(split.chars, {
+          yPercent: 0,
+          opacity: 1,
+          duration: 1.2,
+          stagger: 0.04,
+          ease: 'power4.out',
+        });
+      });
+    }, 100); // Small delay to ensure panel is visible
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, { dependencies: [isOpen] });
 
   // Initialize timeline once
   useGSAP(() => {
-    const navBtn = navBtnRef.current;
     const navPanel = navPanelRef.current;
-    const links = linksRef.current.filter(Boolean) as HTMLAnchorElement[];
-    const topLine = topLineRef.current;
-    const middleLine = middleLineRef.current;
-    const bottomLine = bottomLineRef.current;
-
-    if (!navBtn || !navPanel || !topLine || !middleLine || !bottomLine) return;
+    if (!navPanel) return;
 
     // Kill existing timeline if it exists
     if (timelineRef.current) {
       timelineRef.current.kill();
     }
 
-    const tl = gsap.timeline({ paused: true, reversed: true });
+    // Set initial state - panel off-screen to the right
+    gsap.set(navPanel, { x: '100%' });
 
+    const tl = gsap.timeline({ paused: true });
+
+    // Animate panel into view (slide in from right)
     tl.to(navPanel, {
-      x: '-100%',
+      x: 0,
       duration: 0.8,
       ease: 'power4.inOut',
-    })
-      .to(navBtn, {
-        rotation: 90,
-        duration: 0.8,
-        ease: 'power4.inOut',
-      }, 0)
-      .from(links, {
-        y: 50,
-        opacity: 0,
-        duration: 0.4,
-        stagger: 0.1,
-        ease: 'power2.out',
-      })
-      .to(topLine, { y: 7, rotate: 45, transformOrigin: 'center', duration: 0.4, ease: 'power2.inOut' }, 0)
-      .to(middleLine, { opacity: 0, duration: 0.3, ease: 'power2.inOut' }, 0)
-      .to(bottomLine, { y: -7, rotate: -45, transformOrigin: 'center', duration: 0.4, ease: 'power2.inOut' }, 0)
-      .to(navBtn, { background: 'white' }, 0);
+    });
 
     timelineRef.current = tl;
 
@@ -70,160 +134,136 @@ export function Menu({ navItems }: MenuProps) {
         timelineRef.current = null;
       }
     };
-  }, { scope: navBtnRef, dependencies: [navItems] });
+  }, { dependencies: [navItems] });
 
-  // Set up event listeners for flip animations
-  useGSAP(() => {
-    const links = linksRef.current.filter(Boolean) as HTMLAnchorElement[];
-    const cleanupFunctions: Array<() => void> = [];
-
-    links.forEach(link => {
-      const wrap = link.querySelector('.flip-wrap');
-      const front = link.querySelector('.flip-front');
-      const back = link.querySelector('.flip-back');
-      if (!wrap || !front || !back) return;
-
-      const handleMouseEnter = () => {
-        gsap.killTweensOf([front, back]);
-        gsap.set(back, { rotationX: -90, transformOrigin: '50% 50% -0.01px' });
-        gsap.to(front, { rotationX: 90, duration: 0.35, ease: 'power2.in', transformOrigin: '50% 50% -0.01px' });
-        gsap.to(back, { rotationX: 0, duration: 0.5, ease: 'power3.out', delay: 0.15 });
-      };
-
-      const handleMouseLeave = () => {
-        gsap.killTweensOf([front, back]);
-        gsap.to(back, { rotationX: -90, duration: 0.3, ease: 'power2.in' });
-        gsap.to(front, { rotationX: 0, duration: 0.4, ease: 'power3.out', delay: 0.05 });
-      };
-
-      const handleClick = () => {
-        if (isOpenRef.current && timelineRef.current) {
-          isOpenRef.current = false;
-          setIsOpen(false);
-          timelineRef.current.reverse();
-          document.body.style.overflow = 'auto';
-          document.body.classList.remove('menu-open');
-        }
-      };
-
-      link.addEventListener('mouseenter', handleMouseEnter);
-      link.addEventListener('mouseleave', handleMouseLeave);
-      link.addEventListener('click', handleClick);
-
-      cleanupFunctions.push(() => {
-        link.removeEventListener('mouseenter', handleMouseEnter);
-        link.removeEventListener('mouseleave', handleMouseLeave);
-        link.removeEventListener('click', handleClick);
-        gsap.killTweensOf([front, back]);
-      });
-    });
-
-    return () => {
-      cleanupFunctions.forEach(cleanup => cleanup());
-    };
-  }, { scope: navBtnRef, dependencies: [navItems] });
-
-  // Handle toggle
-  const handleToggle = useCallback(() => {
+  // Control menu open/close
+  useEffect(() => {
     if (!timelineRef.current) return;
 
-    const newState = !isOpenRef.current;
-    isOpenRef.current = newState;
-    setIsOpen(newState);
-
-    if (newState) {
+    if (isOpen) {
       timelineRef.current.play();
       document.body.style.overflow = 'hidden';
-      document.body.classList.add('menu-open');
     } else {
       timelineRef.current.reverse();
       document.body.style.overflow = 'auto';
-      document.body.classList.remove('menu-open');
     }
-  }, []);
+  }, [isOpen]);
 
-  // Set up button click handler
+  // Set up click handlers to close menu
   useEffect(() => {
-    const navBtn = navBtnRef.current;
-    if (!navBtn) return;
+    const links = linksRef.current.filter(Boolean) as HTMLAnchorElement[];
 
-    navBtn.addEventListener('click', handleToggle);
-    return () => {
-      navBtn.removeEventListener('click', handleToggle);
-    };
-  }, [handleToggle]);
+    links.forEach(link => {
+      const handleClick = () => {
+        onClose();
+      };
+
+      link.addEventListener('click', handleClick);
+      return () => {
+        link.removeEventListener('click', handleClick);
+      };
+    });
+  }, [onClose]);
 
   return (
-    <>
-      <button
-        ref={navBtnRef}
-        id="nav-btn"
-        className="flex gap-1.5 bg-black rounded-full bg-blend-difference items-center justify-center flex-col w-12 h-12 p-2 z-[60] relative"
-        aria-label="Toggle navigation menu"
-        aria-expanded={isOpen}
-      >
-        <span ref={topLineRef} className="line top border bg-black w-full bg-blend-difference" aria-hidden="true"></span>
-        <span ref={middleLineRef} className="line middle border bg-black w-full bg-blend-difference" aria-hidden="true"></span>
-        <span ref={bottomLineRef} className="line bottom border bg-black w-full bg-blend-difference" aria-hidden="true"></span>
-      </button>
-
-      <div
+    <div
         ref={navPanelRef}
         id="mobile-nav"
-        className="fixed min-h-[100dvh] left-full top-0 w-full z-50 bg-black text-white px-6 py-10"
+        className="fixed min-h-dvh right-0 top-0 w-full md:w-[35%] z-50 bg-background text-foreground px-6 py-10 border-l border-border flex flex-col justify-between"
       >
-        <ul className="space-y-8 items-left h-screen justify-center gap-24 flex flex-col text-left">
-          {navItems?.items?.map((item: any, index: number) => {
-            const href =
-              item.url ||
-              (typeof item.page === 'object' && item.page?.permalink) ||
-              (typeof item.post === 'object' && item.post?.slug ? `/post/${item.post.slug}` : null) ||
-              '#';
-            const isActive = href && pathname === href;
-            return (
-              <li key={item.id || index}>
-                <a
-                  ref={(el) => {
-                    linksRef.current[index] = el;
-                  }}
-                  href={href}
-                  className={`nav-link group block uppercase text-white ${isActive ? 'active' : ''}`}
-                >
-                  <span className="flip-wrap inline-block">
-                    <span className="flip-front inline-block">{item.title}</span>
-                    <span className="flip-back inline-block" aria-hidden="true">{item.title}</span>
-                  </span>
-                </a>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+        <div className="flex-1 flex flex-col justify-center">
+          {/* Navigation Heading */}
+          <h2 className="menu-heading text-sm uppercase tracking-wider text-muted-foreground mb-8">
+            Navigation
+          </h2>
 
-      <style jsx>{`
-        .nav-link {
-          font-size: clamp(2.75rem, 5vw, 5rem);
-          line-height: 1;
-        }
-        .nav-link.active .flip-front {
-          text-decoration: underline;
-        }
-        .flip-wrap {
-          perspective: 1000px;
-        }
-        .flip-front,
-        .flip-back {
-          display: inline-block;
-          will-change: transform;
-          backface-visibility: hidden;
-        }
-        .flip-back {
-          position: absolute;
-          left: 0;
-          top: 0;
-        }
-      `}</style>
-    </>
+          {/* Navigation Links */}
+          <ul className="space-y-8 items-left flex flex-col text-left">
+            {navItems?.items?.map((item: NavigationItems, index: number) => {
+              const pagePermalink = typeof item.page === 'object' && item.page !== null && 'permalink' in item.page 
+                ? (item.page as { permalink: string }).permalink 
+                : null;
+              const postSlug = typeof item.post === 'object' && item.post !== null && 'slug' in item.post
+                ? (item.post as { slug: string }).slug
+                : null;
+              const href =
+                item.url ||
+                pagePermalink ||
+                (postSlug ? `/post/${postSlug}` : null) ||
+                '#';
+              const isActive = href && pathname === href;
+              return (
+                <li key={item.id || index}>
+                  {href && href.startsWith('/') ? (
+                    <TransitionLink
+                    ref={(el) => {
+                      linksRef.current[index] = el;
+                    }}
+                    href={href}
+                    className={`nav-link group block uppercase text-foreground text-[clamp(2.75rem,5vw,5rem)] leading-none tracking-tight ${isActive ? 'underline' : ''}`}
+                    >
+                      {item.title}
+                    </TransitionLink>
+                  ) : (
+                    <a
+                      ref={(el) => {
+                        linksRef.current[index] = el;
+                      }}
+                      href={href || '#'}
+                      target={href?.startsWith('http') ? '_blank' : undefined}
+                      rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      className={`nav-link group block uppercase text-foreground text-[clamp(2.75rem,5vw,5rem)] leading-none tracking-tight ${isActive ? 'underline' : ''}`}
+                  >
+                    {item.title}
+                  </a>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        {/* Social Links at Bottom */}
+        <div className="pb-8">
+          <h3 className="menu-heading text-sm uppercase tracking-wider text-muted-foreground mb-6">
+            Connect
+          </h3>
+          <div className="flex items-center gap-6 md:gap-10 text-xl md:text-2xl flex-wrap">
+            <a 
+              href="https://linkedin.com/in/judahsullivan" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="social-link capitalize"
+            >
+              Linkedin
+            </a>
+            <a 
+              href="https://profile.indeed.com/?hl=en_US&co=US&from=gnav-homepage" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="social-link capitalize"
+            >
+              Indeed
+            </a>
+            <a 
+              href="https://youtube.com/judahsullivan" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="social-link capitalize"
+            >
+              YouTube
+            </a>
+            <a 
+              href="https://github.com/judahbsullivan" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="social-link capitalize"
+            >
+              Github
+            </a>
+          </div>
+        </div>
+      </div>
   );
 }
 

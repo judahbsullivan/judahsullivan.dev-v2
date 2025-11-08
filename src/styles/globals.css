@@ -390,3 +390,16 @@
     margin: 0 !important;
   }
 }
+
+/* View Transitions */
+.view-transition-container {
+  view-transition-name: page-content;
+}
+
+@supports (view-transition-name: none) {
+  ::view-transition-old(page-content),
+  ::view-transition-new(page-content) {
+    /* GSAP handles the animations, so minimal CSS needed */
+    animation-duration: 0s;
+  }
+}

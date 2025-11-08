@@ -37,16 +37,16 @@ interface BlockPostsProps extends BlockPostsType {
   normalized?: CardItem[];
 }
 
-function BlockPosts({ headline, tagline, limit, collection, layouts, normalized: initialNormalized }: BlockPostsProps) {
+function BlockPosts({ headline, tagline, collection, layouts, normalized: initialNormalized }: BlockPostsProps) {
   // Use layouts prop for initial render (server-side), fallback to 'mason'
   // This ensures server and client render the same initially
   // TODO: Carousel temporarily disabled - planning phase
   const defaultLayout = layouts || 'mason';
   const [currentLayout, setCurrentLayout] = useState<string>(defaultLayout);
-  const [normalized, setNormalized] = useState<CardItem[]>(initialNormalized || []);
+  const [normalized] = useState<CardItem[]>(initialNormalized || []);
   const [isBlogOrProjectsPage, setIsBlogOrProjectsPage] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-
+  
   const pathname = usePathname();
   const postsBlockRef = useRef<HTMLElement>(null);
   const postsContainerRef = useRef<HTMLDivElement>(null);
@@ -55,7 +55,6 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
   // TODO: Carousel temporarily disabled - planning phase
   // const postsCarouselRef = useRef<HTMLDivElement>(null);
   const layoutWrapperRef = useRef<HTMLDivElement>(null);
-  const scrollPositionRef = useRef<number>(0);
   const animationRef = useRef<gsap.core.Timeline | null>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -64,10 +63,14 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
   useEffect(() => {
     const currentPath = pathname || '/';
     const isBlogOrProjects = currentPath === '/blog' || currentPath === '/blog/' || currentPath === '/projects' || currentPath === '/projects/';
-    setIsBlogOrProjectsPage(isBlogOrProjects);
-    if (isBlogOrProjects) {
-      setCurrentLayout('mason');
-    }
+    
+    // Defer state updates to avoid cascading renders
+    requestAnimationFrame(() => {
+      setIsBlogOrProjectsPage(isBlogOrProjects);
+      if (isBlogOrProjects) {
+        setCurrentLayout('mason');
+      }
+    });
   }, [pathname]);
 
   // Text animations using modular hook
@@ -147,14 +150,14 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
     Object.entries(layoutElements).forEach(([key, element]) => {
       if (element) {
         if (key === currentLayout) {
-          gsap.set(element, {
-            opacity: 1,
+          gsap.set(element, { 
+            opacity: 1, 
             visibility: 'visible',
             clearProps: "transform,scale"
           });
         } else {
-          gsap.set(element, {
-            opacity: 0,
+          gsap.set(element, { 
+            opacity: 0, 
             visibility: 'hidden',
             clearProps: "transform,scale"
           });
@@ -204,7 +207,7 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
 
     setIsTransitioning(true);
     const oldLayout = currentLayout;
-
+    
     // Store current scroll position BEFORE any changes
     const currentScrollY = window.scrollY;
     const wrapper = layoutWrapperRef.current;
@@ -212,9 +215,8 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
       setIsTransitioning(false);
       return;
     }
-
+    
     const wrapperRect = wrapper.getBoundingClientRect();
-    const wrapperTopBefore = wrapperRect.top + currentScrollY;
     // Store the distance from viewport top to wrapper top
     const viewportToWrapperBefore = wrapperRect.top;
 
@@ -241,7 +243,7 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
         window.scrollTo(0, originalScrollY);
       }
     };
-
+    
     // Lock scroll position during transition
     const scrollLockInterval = setInterval(scrollLock, 10);
 
@@ -253,9 +255,9 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
       onComplete: () => {
         // Remove scroll lock
         clearInterval(scrollLockInterval);
-
+        
         setIsTransitioning(false);
-
+        
         // Update button states
         const layoutButtons = document.querySelectorAll('.layouts-btn');
         layoutButtons.forEach(btn => {
@@ -280,8 +282,8 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
       ease: "power2.in",
       onComplete: () => {
         // Step 3: Hide old element completely BEFORE showing new one
-        gsap.set(oldElement, {
-          display: 'none',
+        gsap.set(oldElement, { 
+          display: 'none', 
           visibility: 'hidden',
           clearProps: "transform,scale,opacity"
         });
@@ -290,18 +292,18 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
 
     // Step 4: Update state and prepare new element (completely hidden)
     tl.call(() => {
-      setCurrentLayout(layout);
-
+    setCurrentLayout(layout);
+      
       // Show new element but keep it COMPLETELY invisible and hidden initially
       // Use both opacity AND visibility hidden to prevent any flicker
       // Display is handled by CSS class, but we override with GSAP for FLIP
-      gsap.set(newElement, {
-        display: 'block',
-        opacity: 0,
+      gsap.set(newElement, { 
+        display: 'block', 
+        opacity: 0, 
         visibility: 'hidden', // Critical: hidden to prevent flicker
         scale: 0.98 // Subtle scale for smooth transition
       });
-
+      
       // Update CSS classes for consistency
       newElement.classList.remove('hidden');
       newElement.classList.add('block');
@@ -314,10 +316,7 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
       // Force reflow to ensure new element is in DOM
       void newElement.offsetHeight;
 
-      // Step 5: Record the LAST state (new positions)
-      const newState = Flip.getState(newElement, { props: "opacity,visibility" });
-
-      // Step 6: Use FLIP to animate smoothly from old position to new
+      // Step 5: Use FLIP to animate smoothly from old position to new
       Flip.from(state, {
         targets: newElement,
         duration: 0.4,
@@ -326,7 +325,7 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
         scale: true,
         onStart: () => {
           // Make visible ONLY when animation starts (prevents flicker)
-          gsap.set(newElement, {
+          gsap.set(newElement, { 
             opacity: 1,
             visibility: 'visible'
           });
@@ -336,7 +335,7 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
           const wrapperRectAfter = wrapper.getBoundingClientRect();
           const viewportToWrapperAfter = wrapperRectAfter.top;
           const viewportDiff = viewportToWrapperAfter - viewportToWrapperBefore;
-
+          
           // Adjust scroll to maintain the same viewport position relative to wrapper
           if (Math.abs(viewportDiff) > 1) {
             const targetScrollY = currentScrollY + viewportDiff;
@@ -430,30 +429,30 @@ function BlockPosts({ headline, tagline, limit, collection, layouts, normalized:
         <div className="max-w-7xl mx-auto">
           {/* Layout Wrapper for FLIP animation */}
           <div ref={layoutWrapperRef} className="relative min-h-[200px]">
-            {/* Posts Container */}
-            <div
-              ref={postsContainerRef}
-              id="posts-container"
+          {/* Posts Container */}
+            <div 
+              ref={postsContainerRef} 
+              id="posts-container" 
               className={currentLayout === 'mason' ? 'block' : 'hidden'}
             >
               {currentLayout === 'mason' && <MasonGrid posts={normalized} base={base} />}
-            </div>
+          </div>
 
-            <div
-              ref={postsTableRef}
-              id="posts-table"
+            <div 
+              ref={postsTableRef} 
+              id="posts-table" 
               className={currentLayout === 'table' ? 'block' : 'hidden'}
             >
               {currentLayout === 'table' && <Table posts={normalized} base={base} />}
-            </div>
+          </div>
 
-            <div
-              ref={postsParallaxRef}
-              id="posts-parallax"
+            <div 
+              ref={postsParallaxRef} 
+              id="posts-parallax" 
               className={currentLayout === 'parallax' ? 'block' : 'hidden'}
             >
               {currentLayout === 'parallax' && <ParallaxGrid posts={normalized} base={base} />}
-            </div>
+          </div>
 
             {/* TODO: Carousel temporarily disabled - planning phase */}
             {/* <div 

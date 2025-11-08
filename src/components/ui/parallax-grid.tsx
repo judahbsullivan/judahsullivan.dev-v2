@@ -120,7 +120,6 @@ export function ParallaxGrid({ posts, className, base = 'post' }: ParallaxGridPr
         // Content reveal animations
         const title = content.querySelector(".parallax-title");
         const description = content.querySelector(".parallax-description");
-        const link = content.querySelector(".parallax-link");
 
         if (title) {
           const splitTitle = new SplitText(title, {
@@ -174,31 +173,6 @@ export function ParallaxGrid({ posts, className, base = 'post' }: ParallaxGridPr
               scrub: false,
             },
           });
-        }
-
-        if (link) {
-          gsap.fromTo(
-            link,
-            {
-              scale: 0,
-              opacity: 0,
-              transform: "translateX(100%)",
-            },
-            {
-              scale: 1,
-              opacity: 1,
-              transform: "translateX(0%)",
-              duration: 0.6,
-              ease: "back.out(1.7)",
-              delay: 1.8,
-              scrollTrigger: {
-                trigger: item,
-                start: "top 80%",
-                end: "bottom 20%",
-                scrub: false,
-              },
-            },
-          );
         }
 
         // Enhanced hover bubble animation
@@ -401,15 +375,13 @@ export function ParallaxGrid({ posts, className, base = 'post' }: ParallaxGridPr
               <p className="parallax-description text-sm md:text-base lg:text-lg mb-3 md:mb-6 text-gray-600 line-clamp-2 md:line-clamp-3">
                 {post.description}
               </p>
-              <div className="overflow-hidden">
-                <PillLink 
-                  href={`/${base}/${post.slug}`} 
-                  className="parallax-link"
-                  aria-label={post.title ? `Read more about ${post.title}` : `Read more ${base}`}
-                >
-                  {post.title ? `Read More: ${post.title}` : 'Read More'}
-                </PillLink>
-              </div>
+              <PillLink 
+                href={`/${base}/${post.slug}`} 
+                className="parallax-link"
+                aria-label={post.title ? `Read more about ${post.title}` : `Read more ${base}`}
+              >
+                {post.title ? `Read More: ${post.title}` : 'Read More'}
+              </PillLink>
             </div>
           </div>
         ))}

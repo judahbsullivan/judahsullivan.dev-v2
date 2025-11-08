@@ -110,8 +110,9 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
 
     return () => {
       ScrollTrigger.getAll().forEach((trigger) => {
-        const triggerEl = trigger.vars?.trigger as Element | undefined;
-        if (triggerEl && container.contains(triggerEl)) {
+        const triggerEl = trigger.vars?.trigger;
+        // Check if triggerEl is a Node (Element) before calling contains
+        if (triggerEl && triggerEl instanceof Node && container.contains(triggerEl)) {
           trigger.kill();
         }
       });

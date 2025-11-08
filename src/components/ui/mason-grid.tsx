@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { DirectusImage } from './directus-image';
 import { Link } from './link';
+import { PillLink } from './pill-link';
 import Image from 'next/image';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -114,11 +115,20 @@ export function MasonGrid({ posts, className, base = 'post' }: MasonGridProps) {
                       {post.description}
                     </p>
                   )}
-                  {post.published_at && (
-                    <div className="text-xs text-gray-600">
-                      {new Date(post.published_at).toLocaleDateString()}
-                    </div>
-                  )}
+                  <div className="flex items-center justify-between mt-4">
+                    {post.published_at && (
+                      <div className="text-xs text-gray-600">
+                        {new Date(post.published_at).toLocaleDateString()}
+                      </div>
+                    )}
+                    <PillLink 
+                      href={`/${base}/${post.slug}`}
+                      className="ml-auto"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Read More
+                    </PillLink>
+                  </div>
                 </div>
               </Link>
             </div>

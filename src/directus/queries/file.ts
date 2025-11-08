@@ -12,12 +12,12 @@ export async function fileUrl(key?: string) {
   if (!key || typeof key !== 'string' || key.trim() === '') {
     throw new Error('Invalid key: key must be a non-empty string');
   }
-  
+
   // Validate apiUrl is set
   if (!api.apiUrl || api.apiUrl.trim() === '') {
     throw new Error('Invalid API URL: NEXT_PUBLIC_DIRECTUS_API_URL environment variable is not set');
   }
-  
+
   return `${api.apiUrl}assets/${key}`;
 }
 
