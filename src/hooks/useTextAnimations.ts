@@ -65,12 +65,48 @@ export function useTextAnimations(
       const vpH = typeof window !== 'undefined' ? window.innerHeight : 0;
       return rect.top <= vpH * 0.9; // approximate 'top 90%' start
     };
+    const makeScrollTrigger = (el: Element) => {
+      try {
+        if (!el || !(el instanceof Element)) return undefined;
+        // Ensure element is attached and measurable
+        if (typeof el.getBoundingClientRect !== 'function') return undefined;
+        // document.contains guards detached nodes
+        if (typeof document !== 'undefined' && !document.contains(el)) return undefined;
+        return {
+          trigger: el,
+          start: options.start || 'top 85%',
+          once: options.once !== false,
+          invalidateOnRefresh: true,
+        };
+      } catch {
+        return undefined;
+      }
+    };
     const windowLoadHandler = () => {
       // Refresh after images load to recalc positions
       try {
         ScrollTrigger.refresh();
       } catch {}
     };
+    const runAfterFontsReady = (cb: () => void) => {
+      try {
+        const fontsLike = (document as Document & { fonts?: { ready?: Promise<unknown>; status?: string } }).fonts;
+        if (fontsLike?.status === 'loaded') {
+          requestAnimationFrame(cb);
+          return;
+        }
+        const ready = fontsLike?.ready;
+        if (ready && typeof (ready as Promise<unknown>).then === 'function') {
+          (ready as Promise<unknown>).then(() => requestAnimationFrame(cb));
+          return;
+        }
+      } catch {
+        // ignore
+      }
+      // Fallback
+      requestAnimationFrame(cb);
+    };
+    const processedOnce = new WeakSet<Element>();
 
     // Only create timeline if we need it (when animateEach is false)
     // Most configs will use individual ScrollTriggers, so we'll create timeline lazily
@@ -111,7 +147,10 @@ export function useTextAnimations(
         case 'headline': {
           elements.forEach((el) => {
             if (!el || !(el instanceof Element) || !el.isConnected) return;
-            try {
+            if (processedOnce.has(el)) return;
+            runAfterFontsReady(() => {
+              if (processedOnce.has(el)) return;
+              try {
                 // Avoid double-splitting if already split
                 let split: SplitText | null = null;
                 const hasChars = (el as Element).querySelector('.char');
@@ -168,12 +207,7 @@ export function useTextAnimations(
                 gsap.to(elementsToAnimate, {
                   ...animConfig,
                   immediateRender: false,
-                  scrollTrigger: {
-                    trigger: el,
-                    start: options.start || 'top 85%',
-                    once: options.once !== false,
-                    invalidateOnRefresh: true,
-                  },
+                  scrollTrigger: makeScrollTrigger(el),
                 });
               } else {
                 getTimeline().to(
@@ -182,9 +216,11 @@ export function useTextAnimations(
                   config.position || 0
                 );
               }
-            } catch (error) {
-              console.warn('ScrollTrigger error in headline animation:', error);
-            }
+                processedOnce.add(el);
+              } catch (error) {
+                console.warn('ScrollTrigger error in headline animation:', error);
+              }
+            });
           });
           break;
         }
@@ -204,12 +240,7 @@ export function useTextAnimations(
                   duration: 0.7,
                   ease: 'power2.out',
                   onComplete: markOneDone,
-                  scrollTrigger: {
-                    trigger: el,
-                    start: options.start || 'top 85%',
-                    once: options.once !== false,
-                    invalidateOnRefresh: true,
-                  },
+                  scrollTrigger: makeScrollTrigger(el),
                 });
               } catch (error) {
                 // Silently fail if ScrollTrigger can't be created
@@ -237,38 +268,38 @@ export function useTextAnimations(
           if (shouldAnimateEach) {
             elements.forEach((el) => {
               if (!el || !(el instanceof Element) || !el.isConnected) return;
-              try {
-                // Split into lines for smoother line-by-line entrance
-                let split: SplitText | null = null;
-                const hasLines = (el as Element).querySelector('.line');
-                if (!hasLines) {
-                  split = new SplitText(el as Element, {
-                    type: 'lines',
-                    linesClass: 'line',
-                    smartWrap: true,
+              if (processedOnce.has(el)) return;
+              runAfterFontsReady(() => {
+                if (processedOnce.has(el)) return;
+                try {
+                  // Split into lines for smoother line-by-line entrance
+                  let split: SplitText | null = null;
+                  const hasLines = (el as Element).querySelector('.line');
+                  if (!hasLines) {
+                    split = new SplitText(el as Element, {
+                      type: 'lines',
+                      linesClass: 'line',
+                      smartWrap: true,
+                    });
+                    splitInstances.push(split);
+                  }
+  
+                  const lines = split ? (split.lines as HTMLElement[]) : (Array.from((el as Element).querySelectorAll('.line')) as HTMLElement[]);
+                  if (!lines || lines.length === 0) return;
+  
+                  gsap.from(lines, {
+                    yPercent: 100,
+                    opacity: 0,
+                    duration: 0.9,
+                    ease: 'power3.out',
+                    stagger: 0.05,
+                    scrollTrigger: makeScrollTrigger(el),
                   });
-                  splitInstances.push(split);
+                  processedOnce.add(el);
+                } catch (error) {
+                  console.warn('ScrollTrigger error:', error);
                 }
-
-                const lines = split ? (split.lines as HTMLElement[]) : (Array.from((el as Element).querySelectorAll('.line')) as HTMLElement[]);
-                if (!lines || lines.length === 0) return;
-
-                gsap.from(lines, {
-                  yPercent: 100,
-                  opacity: 0,
-                  duration: 0.9,
-                  ease: 'power3.out',
-                  stagger: 0.05,
-                  scrollTrigger: {
-                    trigger: el,
-                    start: options.start || 'top 85%',
-                    once: options.once !== false,
-                    invalidateOnRefresh: true,
-                  },
-                });
-              } catch (error) {
-                console.warn('ScrollTrigger error:', error);
-              }
+              });
             });
           } else {
             // Fallback to simple fade/slide on timeline when not animating each separately
@@ -297,12 +328,7 @@ export function useTextAnimations(
                   duration: 0.8,
                   ease: 'power2.out',
                   onComplete: markOneDone,
-                  scrollTrigger: {
-                    trigger: el,
-                    start: options.start || 'top 85%',
-                    once: options.once !== false,
-                    invalidateOnRefresh: true,
-                  },
+                  scrollTrigger: makeScrollTrigger(el),
                 });
               } catch (error) {
                 console.warn('ScrollTrigger error:', error);
@@ -339,12 +365,7 @@ export function useTextAnimations(
                   duration: 0.7,
                   ease: 'power2.out',
                   onComplete: markOneDone,
-                  scrollTrigger: {
-                    trigger: el,
-                    start: options.start || 'top 85%',
-                    once: options.once !== false,
-                    invalidateOnRefresh: true,
-                  },
+                  scrollTrigger: makeScrollTrigger(el),
                 });
               } catch (error) {
                 console.warn('ScrollTrigger error:', error);
@@ -382,12 +403,7 @@ export function useTextAnimations(
                   duration: 0.9,
                   ease: 'power2.out',
                   onComplete: markOneDone,
-                  scrollTrigger: {
-                    trigger: el,
-                    start: options.start || 'top 85%',
-                    once: options.once !== false,
-                    invalidateOnRefresh: true,
-                  },
+                  scrollTrigger: makeScrollTrigger(el),
                 });
               } catch (error) {
                 console.warn('ScrollTrigger error:', error);
@@ -425,12 +441,7 @@ export function useTextAnimations(
                   duration: 0.8,
                   ease: 'power2.out',
                   onComplete: markOneDone,
-                  scrollTrigger: {
-                    trigger: el,
-                    start: options.start || 'top 85%',
-                    once: options.once !== false,
-                    invalidateOnRefresh: true,
-                  },
+                  scrollTrigger: makeScrollTrigger(el),
                 });
               } catch (error) {
                 console.warn('ScrollTrigger error:', error);
