@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import SplitText from 'gsap/SplitText';
 import ScrollTrigger from 'gsap/ScrollTrigger';
+import { beginGate, resolveGate } from '@/components/globals/transitionGate';
 
 gsap.registerPlugin(SplitText, ScrollTrigger);
 
@@ -19,6 +20,7 @@ interface UseTextAnimationsOptions {
   trigger?: string;
   start?: string;
   once?: boolean;
+  notifyOnComplete?: boolean;
 }
 
 /**
@@ -43,6 +45,26 @@ export function useTextAnimations(
     if (!root) return;
     
     const splitInstances: SplitText[] = [];
+    let gateStarted = false;
+    let pendingToComplete = 0;
+    const maybeStartGate = () => {
+      if (options.notifyOnComplete && !gateStarted) {
+        beginGate();
+        gateStarted = true;
+      }
+    };
+    const markOneDone = () => {
+      if (!options.notifyOnComplete) return;
+      pendingToComplete = Math.max(0, pendingToComplete - 1);
+      if (pendingToComplete === 0 && gateStarted) {
+        resolveGate();
+      }
+    };
+    const isInView = (el: Element) => {
+      const rect = el.getBoundingClientRect();
+      const vpH = typeof window !== 'undefined' ? window.innerHeight : 0;
+      return rect.top <= vpH * 0.9; // approximate 'top 90%' start
+    };
     const windowLoadHandler = () => {
       // Refresh after images load to recalc positions
       try {
@@ -89,67 +111,80 @@ export function useTextAnimations(
         case 'headline': {
           elements.forEach((el) => {
             if (!el || !(el instanceof Element) || !el.isConnected) return;
-            
-            requestAnimationFrame(() => {
-              if (!el.isConnected) return;
-              
-              try {
+            try {
                 // Avoid double-splitting if already split
                 let split: SplitText | null = null;
                 const hasChars = (el as Element).querySelector('.char');
-                if (!hasChars) {
-                  split = new SplitText(el as Element, {
-                    type: 'chars, words, lines',
-                    linesClass: 'line',
-                    wordsClass: 'word',
-                    charsClass: 'char',
-                    mask: 'lines',
-                    smartWrap: true,
-                  });
-                  splitInstances.push(split);
-                }
-
-                const charElements: HTMLElement[] = split
-                  ? (split.chars as HTMLElement[])
-                  : (Array.from((el as Element).querySelectorAll('.char')) as HTMLElement[]);
-                if (!charElements || charElements.length === 0) return;
-
-                // Only set initial state if not already animated
-                gsap.set(charElements, { yPercent: 100, opacity: 0 });
-                
-                if (shouldAnimateEach) {
-                  // Each element gets its own ScrollTrigger
-                  gsap.to(charElements, {
-                    yPercent: 0,
-                    opacity: 1,
-                    duration: 1.2,
-                    stagger: 0.04,
-                    ease: 'power4.out',
-                    immediateRender: false,
-                    scrollTrigger: {
-                      trigger: el,
-                      start: options.start || 'top 85%',
-                      once: options.once !== false,
-                      invalidateOnRefresh: true,
-                    },
-                  });
-                } else {
-                  getTimeline().to(
-                    charElements,
-                    {
-                      yPercent: 0,
-                      opacity: 1,
-                      duration: 1.2,
-                      stagger: 0.04,
-                      ease: 'power4.out',
-                    },
-                    config.position || 0
-                  );
-                }
-              } catch (error) {
-                console.warn('ScrollTrigger error in headline animation:', error);
+              // Decide split granularity: <= 2 words -> chars; otherwise lines
+              const textContent = (el.textContent || '').trim();
+              const wordCount = textContent ? textContent.split(/\s+/).length : 0;
+              const useLines = wordCount > 2;
+              const lineExists = (el as Element).querySelector('.line');
+              if (!hasChars && !lineExists) {
+                split = new SplitText(el as Element, {
+                  type: useLines ? 'lines' : 'chars, words, lines',
+                  linesClass: 'line',
+                  wordsClass: 'word',
+                  charsClass: 'char',
+                  mask: 'lines',
+                  smartWrap: true,
+                });
+                splitInstances.push(split);
               }
-            });
+
+              const elementsToAnimate: HTMLElement[] = (() => {
+                if (useLines) {
+                  const lines = split ? (split.lines as HTMLElement[]) : (Array.from((el as Element).querySelectorAll('.line')) as HTMLElement[]);
+                  return lines || [];
+                }
+                const chars = split ? (split.chars as HTMLElement[]) : (Array.from((el as Element).querySelectorAll('.char')) as HTMLElement[]);
+                return chars || [];
+              })();
+              if (!elementsToAnimate || elementsToAnimate.length === 0) return;
+
+              if (isInView(el)) {
+                maybeStartGate();
+                pendingToComplete += 1;
+              }
+
+              // Only set initial state if not already animated
+              if (useLines) {
+                gsap.set(elementsToAnimate, { yPercent: 100, opacity: 0 });
+              } else {
+                gsap.set(elementsToAnimate, { yPercent: 100, opacity: 0 });
+              }
+              
+              const animConfig = {
+                yPercent: 0,
+                opacity: 1,
+                duration: 1.2,
+                stagger: useLines ? 0.06 : 0.04,
+                ease: 'power4.out' as gsap.EaseString,
+                onComplete: markOneDone,
+              };
+
+              if (shouldAnimateEach) {
+                // Each element gets its own ScrollTrigger
+                gsap.to(elementsToAnimate, {
+                  ...animConfig,
+                  immediateRender: false,
+                  scrollTrigger: {
+                    trigger: el,
+                    start: options.start || 'top 85%',
+                    once: options.once !== false,
+                    invalidateOnRefresh: true,
+                  },
+                });
+              } else {
+                getTimeline().to(
+                  elementsToAnimate,
+                  animConfig,
+                  config.position || 0
+                );
+              }
+            } catch (error) {
+              console.warn('ScrollTrigger error in headline animation:', error);
+            }
           });
           break;
         }
@@ -158,46 +193,41 @@ export function useTextAnimations(
           if (shouldAnimateEach) {
             elements.forEach((el) => {
               if (!el || !(el instanceof Element) || !el.isConnected) return;
-              
-              // Defer to ensure element is ready
-              requestAnimationFrame(() => {
-                if (!el.isConnected) return;
-                
-                try {
-                  gsap.fromTo(
-                    el,
-                    { y: 14, autoAlpha: 0 },
-                    {
-                      y: 0,
-                      autoAlpha: 1,
-                      duration: 0.7,
-                      ease: 'power2.out',
-                      scrollTrigger: {
-                        trigger: el,
-                        start: options.start || 'top 85%',
-                        once: options.once !== false,
-                        invalidateOnRefresh: true,
-                      },
-                    }
-                  );
-                } catch (error) {
-                  // Silently fail if ScrollTrigger can't be created
-                  console.warn('ScrollTrigger error:', error);
+              try {
+                if (isInView(el)) {
+                  maybeStartGate();
+                  pendingToComplete += 1;
                 }
-              });
+                gsap.from(el, {
+                  y: 14,
+                  autoAlpha: 0,
+                  duration: 0.7,
+                  ease: 'power2.out',
+                  onComplete: markOneDone,
+                  scrollTrigger: {
+                    trigger: el,
+                    start: options.start || 'top 85%',
+                    once: options.once !== false,
+                    invalidateOnRefresh: true,
+                  },
+                });
+              } catch (error) {
+                // Silently fail if ScrollTrigger can't be created
+                console.warn('ScrollTrigger error:', error);
+              }
             });
           } else {
-            getTimeline().fromTo(
-              elements,
-              { y: 14, autoAlpha: 0 },
-              {
-                y: 0,
-                autoAlpha: 1,
-                duration: 0.7,
-                ease: 'power2.out',
-              },
-              config.position || 0
-            );
+            if (isInView(root)) {
+              maybeStartGate();
+              pendingToComplete += 1;
+            }
+            getTimeline().from(elements as unknown as gsap.TweenTarget, {
+              y: 14,
+              autoAlpha: 0,
+              duration: 0.7,
+              ease: 'power2.out',
+              onComplete: markOneDone,
+            }, config.position || 0);
           }
           break;
         }
@@ -207,49 +237,47 @@ export function useTextAnimations(
           if (shouldAnimateEach) {
             elements.forEach((el) => {
               if (!el || !(el instanceof Element) || !el.isConnected) return;
-              
-              requestAnimationFrame(() => {
-                if (!el.isConnected) return;
-                
-                try {
-                  gsap.fromTo(
-                    el,
-                    { y: 20, autoAlpha: 0 },
-                    {
-                      y: 0,
-                      autoAlpha: 1,
-                      duration: 0.8,
-                      ease: 'power2.out',
-                      immediateRender: false,
-                      scrollTrigger: {
-                        trigger: el,
-                        start: options.start || 'top 85%',
-                        once: options.once !== false,
-                        invalidateOnRefresh: true,
-                      },
-                    }
-                  );
-                } catch (error) {
-                  console.warn('ScrollTrigger error:', error);
+              try {
+                // Split into lines for smoother line-by-line entrance
+                let split: SplitText | null = null;
+                const hasLines = (el as Element).querySelector('.line');
+                if (!hasLines) {
+                  split = new SplitText(el as Element, {
+                    type: 'lines',
+                    linesClass: 'line',
+                    smartWrap: true,
+                  });
+                  splitInstances.push(split);
                 }
-              });
+
+                const lines = split ? (split.lines as HTMLElement[]) : (Array.from((el as Element).querySelectorAll('.line')) as HTMLElement[]);
+                if (!lines || lines.length === 0) return;
+
+                gsap.from(lines, {
+                  yPercent: 100,
+                  opacity: 0,
+                  duration: 0.9,
+                  ease: 'power3.out',
+                  stagger: 0.05,
+                  scrollTrigger: {
+                    trigger: el,
+                    start: options.start || 'top 85%',
+                    once: options.once !== false,
+                    invalidateOnRefresh: true,
+                  },
+                });
+              } catch (error) {
+                console.warn('ScrollTrigger error:', error);
+              }
             });
           } else {
-            // Set initial states for timeline
-            elements.forEach((el) => {
-              gsap.set(el, { y: 20, autoAlpha: 0, immediateRender: false });
-            });
-            
-            getTimeline().to(
-              elements,
-              {
-                y: 0,
-                autoAlpha: 1,
-                duration: 0.8,
-                ease: 'power2.out',
-              },
-              config.position || 0
-            );
+            // Fallback to simple fade/slide on timeline when not animating each separately
+            getTimeline().from(elements as unknown as gsap.TweenTarget, {
+              y: 20,
+              autoAlpha: 0,
+              duration: 0.8,
+              ease: 'power2.out',
+            }, config.position || 0);
           }
           break;
         }
@@ -258,44 +286,40 @@ export function useTextAnimations(
           if (shouldAnimateEach) {
             elements.forEach((el) => {
               if (!el || !(el instanceof Element) || !el.isConnected) return;
-              
-              requestAnimationFrame(() => {
-                if (!el.isConnected) return;
-                
-                try {
-                  gsap.fromTo(
-                    el,
-                    { y: 16, autoAlpha: 0 },
-                    {
-                      y: 0,
-                      autoAlpha: 1,
-                      duration: 0.8,
-                      ease: 'power2.out',
-                      scrollTrigger: {
-                        trigger: el,
-                        start: options.start || 'top 85%',
-                        once: options.once !== false,
-                        invalidateOnRefresh: true,
-                      },
-                    }
-                  );
-                } catch (error) {
-                  console.warn('ScrollTrigger error:', error);
+              try {
+                if (isInView(el)) {
+                  maybeStartGate();
+                  pendingToComplete += 1;
                 }
-              });
+                gsap.from(el, {
+                  y: 16,
+                  autoAlpha: 0,
+                  duration: 0.8,
+                  ease: 'power2.out',
+                  onComplete: markOneDone,
+                  scrollTrigger: {
+                    trigger: el,
+                    start: options.start || 'top 85%',
+                    once: options.once !== false,
+                    invalidateOnRefresh: true,
+                  },
+                });
+              } catch (error) {
+                console.warn('ScrollTrigger error:', error);
+              }
             });
           } else {
-            getTimeline().fromTo(
-              elements,
-              { y: 16, autoAlpha: 0 },
-              {
-                y: 0,
-                autoAlpha: 1,
-                duration: 0.8,
-                ease: 'power2.out',
-              },
-              config.position || 0
-            );
+            if (isInView(root)) {
+              maybeStartGate();
+              pendingToComplete += 1;
+            }
+            getTimeline().from(elements as unknown as gsap.TweenTarget, {
+              y: 16,
+              autoAlpha: 0,
+              duration: 0.8,
+              ease: 'power2.out',
+              onComplete: markOneDone,
+            }, config.position || 0);
           }
           break;
         }
@@ -304,45 +328,41 @@ export function useTextAnimations(
           if (shouldAnimateEach) {
             elements.forEach((el) => {
               if (!el || !(el instanceof Element) || !el.isConnected) return;
-              
-              requestAnimationFrame(() => {
-                if (!el.isConnected) return;
-                
-                try {
-                  gsap.fromTo(
-                    el,
-                    { y: 10, autoAlpha: 0 },
-                    {
-                      y: 0,
-                      autoAlpha: 1,
-                      duration: 0.7,
-                      ease: 'power2.out',
-                      scrollTrigger: {
-                        trigger: el,
-                        start: options.start || 'top 85%',
-                        once: options.once !== false,
-                        invalidateOnRefresh: true,
-                      },
-                    }
-                  );
-                } catch (error) {
-                  console.warn('ScrollTrigger error:', error);
+              try {
+                if (isInView(el)) {
+                  maybeStartGate();
+                  pendingToComplete += 1;
                 }
-              });
+                gsap.from(el, {
+                  y: 10,
+                  autoAlpha: 0,
+                  duration: 0.7,
+                  ease: 'power2.out',
+                  onComplete: markOneDone,
+                  scrollTrigger: {
+                    trigger: el,
+                    start: options.start || 'top 85%',
+                    once: options.once !== false,
+                    invalidateOnRefresh: true,
+                  },
+                });
+              } catch (error) {
+                console.warn('ScrollTrigger error:', error);
+              }
             });
           } else {
-            getTimeline().fromTo(
-              elements,
-              { y: 10, autoAlpha: 0 },
-              {
-                y: 0,
-                autoAlpha: 1,
-                duration: 0.7,
-                stagger: 0.08,
-                ease: 'power2.out',
-              },
-              config.position || 0
-            );
+            if (isInView(root)) {
+              maybeStartGate();
+              pendingToComplete += 1;
+            }
+            getTimeline().from(elements as unknown as gsap.TweenTarget, {
+              y: 10,
+              autoAlpha: 0,
+              duration: 0.7,
+              stagger: 0.08,
+              ease: 'power2.out',
+              onComplete: markOneDone,
+            }, config.position || 0);
           }
           break;
         }
@@ -351,44 +371,40 @@ export function useTextAnimations(
           if (shouldAnimateEach) {
             elements.forEach((el) => {
               if (!el || !(el instanceof Element) || !el.isConnected) return;
-              
-              requestAnimationFrame(() => {
-                if (!el.isConnected) return;
-                
-                try {
-                  gsap.fromTo(
-                    el,
-                    { y: 18, autoAlpha: 0 },
-                    {
-                      y: 0,
-                      autoAlpha: 1,
-                      duration: 0.9,
-                      ease: 'power2.out',
-                      scrollTrigger: {
-                        trigger: el,
-                        start: options.start || 'top 85%',
-                        once: options.once !== false,
-                        invalidateOnRefresh: true,
-                      },
-                    }
-                  );
-                } catch (error) {
-                  console.warn('ScrollTrigger error:', error);
+              try {
+                if (isInView(el)) {
+                  maybeStartGate();
+                  pendingToComplete += 1;
                 }
-              });
+                gsap.from(el, {
+                  y: 18,
+                  autoAlpha: 0,
+                  duration: 0.9,
+                  ease: 'power2.out',
+                  onComplete: markOneDone,
+                  scrollTrigger: {
+                    trigger: el,
+                    start: options.start || 'top 85%',
+                    once: options.once !== false,
+                    invalidateOnRefresh: true,
+                  },
+                });
+              } catch (error) {
+                console.warn('ScrollTrigger error:', error);
+              }
             });
           } else {
-            getTimeline().fromTo(
-              elements,
-              { y: 18, autoAlpha: 0 },
-              {
-                y: 0,
-                autoAlpha: 1,
-                duration: 0.9,
-                ease: 'power2.out',
-              },
-              config.position || 0
-            );
+            if (isInView(root)) {
+              maybeStartGate();
+              pendingToComplete += 1;
+            }
+            getTimeline().from(elements as unknown as gsap.TweenTarget, {
+              y: 18,
+              autoAlpha: 0,
+              duration: 0.9,
+              ease: 'power2.out',
+              onComplete: markOneDone,
+            }, config.position || 0);
           }
           break;
         }
@@ -398,44 +414,40 @@ export function useTextAnimations(
           if (shouldAnimateEach) {
             elements.forEach((el) => {
               if (!el || !(el instanceof Element) || !el.isConnected) return;
-              
-              requestAnimationFrame(() => {
-                if (!el.isConnected) return;
-                
-                try {
-                  gsap.fromTo(
-                    el,
-                    { y: 20, autoAlpha: 0 },
-                    {
-                      y: 0,
-                      autoAlpha: 1,
-                      duration: 0.8,
-                      ease: 'power2.out',
-                      scrollTrigger: {
-                        trigger: el,
-                        start: options.start || 'top 85%',
-                        once: options.once !== false,
-                        invalidateOnRefresh: true,
-                      },
-                    }
-                  );
-                } catch (error) {
-                  console.warn('ScrollTrigger error:', error);
+              try {
+                if (isInView(el)) {
+                  maybeStartGate();
+                  pendingToComplete += 1;
                 }
-              });
+                gsap.from(el, {
+                  y: 20,
+                  autoAlpha: 0,
+                  duration: 0.8,
+                  ease: 'power2.out',
+                  onComplete: markOneDone,
+                  scrollTrigger: {
+                    trigger: el,
+                    start: options.start || 'top 85%',
+                    once: options.once !== false,
+                    invalidateOnRefresh: true,
+                  },
+                });
+              } catch (error) {
+                console.warn('ScrollTrigger error:', error);
+              }
             });
           } else {
-            getTimeline().fromTo(
-              elements,
-              { y: 20, autoAlpha: 0 },
-              {
-                y: 0,
-                autoAlpha: 1,
-                duration: 0.8,
-                ease: 'power2.out',
-              },
-              config.position || 0
-            );
+            if (isInView(root)) {
+              maybeStartGate();
+              pendingToComplete += 1;
+            }
+            getTimeline().from(elements as unknown as gsap.TweenTarget, {
+              y: 20,
+              autoAlpha: 0,
+              duration: 0.8,
+              ease: 'power2.out',
+              onComplete: markOneDone,
+            }, config.position || 0);
           }
         }
       }

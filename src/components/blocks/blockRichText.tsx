@@ -26,7 +26,7 @@ function BlockRichText({ id, alignment, tagline, headline, content }: BlockRichT
     richtextRef,
     [
       {
-        selector: id ? `#${id}` : '#blockrichtext',
+        selector: '.richtext-content',
         type: 'paragraph',
       },
       {
@@ -63,7 +63,7 @@ function BlockRichText({ id, alignment, tagline, headline, content }: BlockRichT
 
         {content && (
           <div
-            className="text-lg text-gray-700 prose prose-3xl prose-p:text-2xl"
+            className="richtext-content text-lg text-gray-700 prose prose-3xl prose-p:text-2xl"
             dangerouslySetInnerHTML={{ __html: content }}
           />
         )}

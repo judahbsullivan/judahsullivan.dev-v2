@@ -190,13 +190,13 @@ function BlockCollection({ tagline, headline, limit, collection, layouts, normal
 
       {/* Layout Components */}
       <div ref={collectionLayoutsRef} id="collection-layouts" data-layout={layouts}>
-        {layouts === 'mason' && <MasonGrid posts={normalized} base={(collection === 'projects' || collection === 'project') ? 'project' : 'post'} />}
-        {layouts === 'parallax' && <ParallaxGrid posts={normalized} base={(collection === 'projects' || collection === 'project') ? 'project' : 'post'} />}
+        {layouts === 'mason' && <MasonGrid posts={normalized} base={(collection === 'projects' || collection === 'project') ? 'projects' : 'blog'} />}
+        {layouts === 'parallax' && <ParallaxGrid posts={normalized} base={(collection === 'projects' || collection === 'project') ? 'projects' : 'blog'} />}
         {/* TODO: Carousel temporarily disabled - planning phase */}
         {/* {layouts === 'carousel' && <CarouselGrid posts={normalized} base={(collection === 'projects' || collection === 'project') ? 'project' : 'post'} />} */}
         {(layouts === 'list' || layouts === 'view') && (
           <div className="table-container">
-            <Table posts={normalized} base={(collection === 'projects' || collection === 'project') ? 'project' : 'post'} />
+            <Table posts={normalized} base={(collection === 'projects' || collection === 'project') ? 'projects' : 'blog'} />
           </div>
         )}
       </div>

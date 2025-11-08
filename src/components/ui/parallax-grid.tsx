@@ -24,10 +24,10 @@ type CardItem = {
 interface ParallaxGridProps {
   posts: CardItem[];
   className?: string;
-  base?: 'post' | 'project';
+  base?: string;
 }
 
-export function ParallaxGrid({ posts, className, base = 'post' }: ParallaxGridProps) {
+export function ParallaxGrid({ posts, className, base = 'blog' }: ParallaxGridProps) {
   const gridRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
@@ -364,7 +364,7 @@ export function ParallaxGrid({ posts, className, base = 'post' }: ParallaxGridPr
               )}
               
               <div className="hover-bubble absolute w-fit h-12 flex items-center justify-center bg-black/90 text-white px-4 py-2 md:px-6 md:py-3 rounded-full text-sm md:text-base font-medium opacity-0 pointer-events-none z-10 shadow-lg">
-                Read this {base === 'project' ? 'Project' : 'Post'}
+                Read this {base === 'projects' ? 'Project' : 'Post'}
               </div>
             </div>
             

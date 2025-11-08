@@ -5,12 +5,13 @@ import { useState, useRef, useEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import ScrollTrigger from 'gsap/ScrollTrigger';
+import SplitText from 'gsap/SplitText';
 import { Menu } from './Menu';
 import type { Navigation as NavigationType } from '@/directus/utils/types';
 import { TransitionLink } from '@/components/globals/PageTransition';
 import type { NavigationItems } from '@/directus/utils/types';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 interface NavigationProps {
   navItems: NavigationType | null | undefined;
@@ -25,6 +26,14 @@ function NavigationComponent({ navItems }: NavigationProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const scrollTriggerInitialized = useRef(false);
+  const brandRef = useRef<HTMLSpanElement>(null);
+  const firstPartRef = useRef<HTMLSpanElement>(null);   // "udah"
+  const secondPartRef = useRef<HTMLSpanElement>(null);  // "ullivan"
+  const leftInitialRef = useRef<HTMLSpanElement>(null); // "J"
+  const rightInitialRef = useRef<HTMLSpanElement>(null); // "S"
+  const firstSplitRef = useRef<SplitText | null>(null);
+  const secondSplitRef = useRef<SplitText | null>(null);
+  const brandTlRef = useRef<gsap.core.Timeline | null>(null);
 
   // Simple scroll animation for menu button on desktop only
   useEffect(() => {
@@ -65,6 +74,78 @@ function NavigationComponent({ navItems }: NavigationProps) {
     });
   }, []);
 
+  // Home link hover split animation: keep J and S; animate "udah" and "ullivan"
+  useEffect(() => {
+    const first = firstPartRef.current;
+    const second = secondPartRef.current;
+    if (!first || !second) return;
+    // Start hidden and not affecting layout; initials together
+    gsap.set([first, second], { opacity: 0, position: 'absolute', pointerEvents: 'none' });
+    if (leftInitialRef.current && rightInitialRef.current) {
+      gsap.set([leftInitialRef.current, rightInitialRef.current], { x: 0 });
+    }
+
+    const onEnter = () => {
+      if (!firstPartRef.current || !secondPartRef.current) return;
+      if (brandTlRef.current) brandTlRef.current.kill();
+
+      if (!firstSplitRef.current) {
+        firstSplitRef.current = new SplitText(firstPartRef.current, { type: 'chars' });
+      }
+      if (!secondSplitRef.current) {
+        secondSplitRef.current = new SplitText(secondPartRef.current, { type: 'chars' });
+      }
+      const firstChars = (firstSplitRef.current.chars || []) as HTMLElement[];
+      const secondChars = (secondSplitRef.current.chars || []) as HTMLElement[];
+      // Make text take space now
+      gsap.set([firstPartRef.current, secondPartRef.current], { position: 'relative', opacity: 1, pointerEvents: 'auto' });
+      gsap.set(firstChars, { yPercent: 100, opacity: 0, x: -1 });
+      gsap.set(secondChars, { yPercent: 100, opacity: 0, x: 1 });
+
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      brandTlRef.current = tl;
+      // Slightly nudge only S to make room (keep very small to avoid overlap)
+      if (leftInitialRef.current && rightInitialRef.current) {
+        tl.to(rightInitialRef.current, { x: 3, duration: 0.2 }, 0);
+      }
+      tl.to(firstChars, { yPercent: 0, opacity: 1, x: 0, duration: 0.35, stagger: 0.018 }, 0.02);
+      tl.to(secondChars, { yPercent: 0, opacity: 1, x: 0, duration: 0.35, stagger: 0.018 }, 0.05);
+    };
+
+    const onLeave = () => {
+      if (!firstSplitRef.current || !secondSplitRef.current) return;
+      if (brandTlRef.current) brandTlRef.current.kill();
+      const firstChars = firstSplitRef.current.chars as HTMLElement[];
+      const secondChars = secondSplitRef.current.chars as HTMLElement[];
+      const tl = gsap.timeline({ defaults: { ease: 'power3.inOut' } });
+      brandTlRef.current = tl;
+      tl.to([...secondChars].reverse(), { yPercent: 100, opacity: 0, x: 1, duration: 0.25, stagger: 0.01 }, 0);
+      tl.to([...firstChars].reverse(), { yPercent: 100, opacity: 0, x: -1, duration: 0.25, stagger: 0.01 }, 0.04);
+      // Return S back together slightly before finishing and ensure no bump
+      if (leftInitialRef.current && rightInitialRef.current) {
+        tl.to(rightInitialRef.current, { x: 0, duration: 0.18, ease: 'power3.out' }, 0.16);
+      }
+      // Hide and remove from layout at end
+      tl.set([firstPartRef.current, secondPartRef.current], { opacity: 0, position: 'absolute', pointerEvents: 'none' }, 0.28);
+    };
+
+    const brand = brandRef.current;
+    brand?.addEventListener('mouseenter', onEnter);
+    brand?.addEventListener('mouseleave', onLeave);
+
+    return () => {
+      brand?.removeEventListener('mouseenter', onEnter);
+      brand?.removeEventListener('mouseleave', onLeave);
+      if (brandTlRef.current) brandTlRef.current.kill();
+      try {
+        firstSplitRef.current?.revert();
+        secondSplitRef.current?.revert();
+      } catch {}
+      firstSplitRef.current = null;
+      secondSplitRef.current = null;
+    };
+  }, []);
+
   // Animate hamburger lines when menu opens/closes
   useGSAP(() => {
     const topLine = topLineRef.current;
@@ -94,8 +175,14 @@ function NavigationComponent({ navItems }: NavigationProps) {
       {/* Regular header - not sticky */}
       <header ref={headerRef} className="h-16 py-2 z-50 bg-muted relative w-full px-4 mx-auto">
         <div className="flex items-center h-full justify-between w-full">
-          <TransitionLink href="/">
-            <p>Judah Sullivan</p>
+          <TransitionLink href="/" aria-label="Go to home">
+            <span ref={brandRef} className="inline-block select-none cursor-pointer text-lg font-bold uppercase whitespace-nowrap">
+              <span ref={leftInitialRef} className="inline-block">J</span>
+              <span ref={firstPartRef} className="inline-block mr-0.5">udah</span>
+              <span className="inline-block">&nbsp;</span>
+              <span ref={rightInitialRef} className="inline-block">S</span>
+              <span ref={secondPartRef} className="inline-block ml-0.5">ullivan</span>
+            </span>
           </TransitionLink>
           
           {/* Desktop Navigation - hidden on mobile */}

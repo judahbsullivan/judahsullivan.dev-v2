@@ -22,7 +22,7 @@ type CardItem = {
 interface MasonGridProps {
   posts: CardItem[];
   className?: string;
-  base?: 'post' | 'project';
+  base?: string;
 }
 
 function getSummary(post: CardItem): string {
@@ -32,7 +32,7 @@ function getSummary(post: CardItem): string {
   return text;
 }
 
-export function MasonGrid({ posts, className, base = 'post' }: MasonGridProps) {
+export function MasonGrid({ posts, className, base = 'blog' }: MasonGridProps) {
   const gridRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {

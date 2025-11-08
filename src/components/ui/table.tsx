@@ -21,7 +21,7 @@ type CardItem = {
 interface TableProps {
   posts: CardItem[];
   className?: string;
-  base?: 'post' | 'project';
+  base?: string;
 }
 
 function getSummary(post: CardItem): string {
@@ -31,7 +31,7 @@ function getSummary(post: CardItem): string {
   return text;
 }
 
-export function Table({ posts, className, base = 'post' }: TableProps) {
+export function Table({ posts, className, base = 'blog' }: TableProps) {
   const tableRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {

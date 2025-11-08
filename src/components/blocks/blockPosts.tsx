@@ -179,12 +179,19 @@ function BlockPosts({ headline, tagline, collection, layouts, normalized: initia
     });
   }, { scope: postsBlockRef, dependencies: [currentLayout] });
 
-  const base = collection === 'projects' ? 'project' : 'post';
+  const base = collection === 'projects' ? 'projects' : 'blog';
 
   const isDesktop = () => {
     if (typeof window === 'undefined') return true;
     return window.innerWidth >= 1024;
   };
+
+  // On mobile, never allow 'table' layout; fall back to 'parallax'
+  useEffect(() => {
+    if (!isDesktop() && currentLayout === 'table') {
+      requestAnimationFrame(() => setCurrentLayout('parallax'));
+    }
+  }, [currentLayout]);
 
   const handleLayoutChange = (layout: string) => {
     // TODO: Carousel temporarily disabled - planning phase
@@ -372,7 +379,7 @@ function BlockPosts({ headline, tagline, collection, layouts, normalized: initia
               <div className="text-sm text-gray-600">
                 <span id="post-count">{normalized?.length || 0}</span> items found
               </div>
-              <div className="flex items-center gap-2 bg-gray-200 rounded-lg p-1 overflow-x-auto">
+              <div className="md:flex items-center gap-2 bg-gray-200 rounded-lg p-1 hidden overflow-x-auto">
                 <button
                   onClick={() => handleLayoutChange('mason')}
                   disabled={isTransitioning}
@@ -443,7 +450,7 @@ function BlockPosts({ headline, tagline, collection, layouts, normalized: initia
               id="posts-table" 
               className={currentLayout === 'table' ? 'block' : 'hidden'}
             >
-              {currentLayout === 'table' && <Table posts={normalized} base={base} />}
+              {currentLayout === 'table' && (isDesktop() ? <Table posts={normalized} base={base} /> : <ParallaxGrid posts={normalized} base={base} />)}
           </div>
 
             <div 

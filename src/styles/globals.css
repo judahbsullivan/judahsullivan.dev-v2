@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -118,6 +119,21 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Prose theme that matches app tokens */
+@layer utilities {
+  .prose-theme {
+    @apply prose prose-zinc dark:prose-invert;
+    @apply prose-headings:text-foreground prose-headings:tracking-tight prose-headings:font-semibold;
+    @apply prose-p:text-muted-foreground prose-li:text-muted-foreground;
+    @apply prose-a:text-primary hover:prose-a:text-primary/80;
+    @apply prose-strong:text-foreground;
+    @apply prose-blockquote:text-muted-foreground;
+    @apply prose-hr:border-border;
+    @apply prose-code:text-foreground prose-pre:bg-muted;
+    @apply prose-img:rounded-lg;
   }
 }
 

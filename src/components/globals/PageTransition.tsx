@@ -17,6 +17,9 @@ import {
   type PropsWithChildren,
 } from 'react';
 import gsap from 'gsap';
+import { waitForGate } from './transitionGate';
+import SplitText from 'gsap/SplitText';
+gsap.registerPlugin(SplitText);
 
 const OVERLAY_IN_DURATION = 1;
 const OVERLAY_OUT_DURATION = 1;
@@ -83,6 +86,23 @@ export default function PageTransition({ children }: PropsWithChildren) {
   const animationRef = useRef<gsap.core.Tween | null>(null);
   const titleAnimationRef = useRef<gsap.core.Tween | null>(null);
   const isMountedRef = useRef(false);
+  const overlaySplitRef = useRef<SplitText | null>(null);
+  const titleEnterDoneRef = useRef(false);
+  const titleEnterResolverRef = useRef<(() => void) | null>(null);
+  const expectedTitleEnterMsRef = useRef<number>(1500);
+
+  const waitForTitleEnter = useCallback((timeoutMs = 3000) => {
+    if (titleEnterDoneRef.current) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      const to = setTimeout(() => {
+        resolve();
+      }, timeoutMs);
+      titleEnterResolverRef.current = () => {
+        clearTimeout(to);
+        resolve();
+      };
+    });
+  }, []);
 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayChildren, setDisplayChildren] = useState(children);
@@ -174,60 +194,63 @@ export default function PageTransition({ children }: PropsWithChildren) {
         transformOrigin: 'top center',
       });
 
-      // Wait for title to enter, then exit 0.4s after title starts
-      // Title starts at 0.5s, so exit at 0.5 + 0.4 = 0.9s after overlay started
-      // But we also need to wait for route change, so calculate from when pathname changes
+      // Wait for title to enter, then fade it out, and only exit overlay
+      // after page text animations signal completion (or timeout fallback).
       timeoutRef.current = setTimeout(() => {
-        // Animate title out first
-        const titleElement = titleRef.current;
-        if (titleElement) {
-          const chars = titleElement.querySelectorAll('.char');
-          if (chars.length > 0) {
-            // Kill existing animation
-            if (titleAnimationRef.current) {
-              titleAnimationRef.current.kill();
+        // 1) Ensure title entrance finished
+        waitForTitleEnter(expectedTitleEnterMsRef.current).then(() => {
+          // 2) Fade out title elements (lines preferred if available)
+          const split = overlaySplitRef.current;
+          if (split) {
+            const fadeNodes = (split.lines && split.lines.length > 0 ? split.lines : split.chars) as Element[] | undefined;
+            if (fadeNodes && fadeNodes.length > 0) {
+              if (titleAnimationRef.current) {
+                titleAnimationRef.current.kill();
+              }
+              gsap.killTweensOf(fadeNodes);
+              gsap.to(fadeNodes, {
+                opacity: 0,
+                duration: 0.25,
+                ease: 'power2.in',
+                stagger: 0.02,
+              });
             }
-            gsap.killTweensOf(chars);
-            
-            // Exit animation - fade out in place (no movement)
-            gsap.to(chars, {
-              opacity: 0,
-              duration: 0.2,
-              ease: 'power2.in',
-              stagger: 0.015,
-            });
           }
-        }
 
-        // Then exit overlay after title fades
-        setTimeout(() => {
-        if (animationRef.current) {
-          animationRef.current.kill();
-        }
-
-        animationRef.current = gsap.to(overlay, {
-          scaleY: 0,
-          opacity: 0,
-          duration: OVERLAY_OUT_DURATION,
-          ease: 'power2.inOut',
-          onComplete: () => {
-            gsap.set(overlay, {
-              opacity: 0,
-              scaleY: 0,
-              transformOrigin: 'bottom center',
-              pointerEvents: 'none',
-            });
-            setIsTransitioning(false);
-            setTransitionTitle('');
-            animationRef.current = null;
-            if (titleAnimationRef.current) {
-              titleAnimationRef.current.kill();
-              titleAnimationRef.current = null;
+          // 3) Wait for page text animations gate, then exit overlay
+          waitForGate(1500).then(() => {
+            if (animationRef.current) {
+              animationRef.current.kill();
             }
-          },
+    
+            animationRef.current = gsap.to(overlay, {
+              scaleY: 0,
+              opacity: 0,
+              duration: OVERLAY_OUT_DURATION,
+              ease: 'power2.inOut',
+              onComplete: () => {
+                gsap.set(overlay, {
+                  opacity: 0,
+                  scaleY: 0,
+                  transformOrigin: 'bottom center',
+                  pointerEvents: 'none',
+                });
+                setIsTransitioning(false);
+                setTransitionTitle('');
+                animationRef.current = null;
+                if (titleAnimationRef.current) {
+                  titleAnimationRef.current.kill();
+                  titleAnimationRef.current = null;
+                }
+                if (overlaySplitRef.current) {
+                  try { overlaySplitRef.current.revert(); } catch {}
+                  overlaySplitRef.current = null;
+                }
+              },
+            });
+          });
         });
-        }, 200); // Small delay after title fades
-      }, 400); // Exit animation 0.4s (fourth second) after title enters
+      }, 400);
     } else if (!isNavigatingRef.current) {
       // Initial load or no transition - only update after mount to avoid hydration issues
       if (isMountedRef.current && displayChildren !== children) {
@@ -249,7 +272,7 @@ export default function PageTransition({ children }: PropsWithChildren) {
     }
 
     previousPathnameRef.current = pathname;
-  }, [pathname, children, displayChildren]);
+  }, [pathname, children, displayChildren, waitForTitleEnter]);
 
   // Mark as mounted after first render (client-side only)
   useEffect(() => {
@@ -263,34 +286,56 @@ export default function PageTransition({ children }: PropsWithChildren) {
     const titleElement = titleRef.current;
     if (!titleElement) return;
 
-      // Wait for DOM to update with new title
-      requestAnimationFrame(() => {
-        const chars = titleElement.querySelectorAll('.char');
-        if (chars.length > 0) {
-          // Kill any existing animations first
-          if (titleAnimationRef.current) {
-            titleAnimationRef.current.kill();
-          }
-          gsap.killTweensOf(chars);
+    // Kill previous split if any
+    if (overlaySplitRef.current) {
+      try { overlaySplitRef.current.revert(); } catch {}
+      overlaySplitRef.current = null;
+    }
+    titleEnterDoneRef.current = false;
 
-          // Reset all chars - start from below
-          gsap.set(chars, {
-            yPercent: 100,
-            opacity: 0,
-          });
+    // Split and animate: lines if > 2 words, else chars
+    const wordCount = transitionTitle.trim().split(/\s+/).filter(Boolean).length;
+    const useLines = wordCount > 2;
 
-          // Exact same animation as headline in useTextAnimations
-          // Title enters 0.5 seconds after overlay starts
-          titleAnimationRef.current = gsap.to(chars, {
-            yPercent: 0,
-            opacity: 1,
-            duration: 1.2,
-            stagger: 0.04,
-            ease: 'power4.out',
-            delay: 0.5, // Half second after overlay starts
-          });
-        }
+    // Create split on next frame to ensure DOM has updated text
+    requestAnimationFrame(() => {
+      const split = new SplitText(titleElement, {
+        type: useLines ? 'lines' : 'chars, words, lines',
+        linesClass: 'line',
+        wordsClass: 'word',
+        charsClass: 'char',
+        mask: 'lines',
+        smartWrap: true,
       });
+      overlaySplitRef.current = split;
+
+      const nodes = (useLines ? split.lines : split.chars) as Element[];
+      if (!nodes || nodes.length === 0) return;
+
+      gsap.set(nodes, { yPercent: 100, opacity: 0 });
+      const duration = useLines ? 1.0 : 1.2;
+      const stagger = useLines ? 0.06 : 0.04;
+      const delay = 0.5;
+      const computedMs = (delay + duration + stagger * nodes.length) * 1000;
+      // Clamp to avoid overly long waits
+      expectedTitleEnterMsRef.current = Math.max(700, Math.min(2000, Math.round(computedMs)));
+
+      titleAnimationRef.current = gsap.to(nodes, {
+        yPercent: 0,
+        opacity: 1,
+        duration,
+        stagger,
+        ease: 'power4.out',
+        delay,
+        onComplete: () => {
+          titleEnterDoneRef.current = true;
+          if (titleEnterResolverRef.current) {
+            titleEnterResolverRef.current();
+            titleEnterResolverRef.current = null;
+          }
+        },
+      });
+    });
   }, [transitionTitle]);
 
   // Cleanup on unmount
@@ -346,18 +391,7 @@ export default function PageTransition({ children }: PropsWithChildren) {
                 letterSpacing: '0.05em',
               }}
             >
-              {transitionTitle.split('').map((char, index) => (
-                <span
-                  key={index}
-                  className="char inline-block"
-                  style={{
-                    transform: 'translateY(100%)',
-                    opacity: 0,
-                  }}
-                >
-                  {char === ' ' ? '\u00A0' : char}
-                </span>
-              ))}
+              {transitionTitle}
             </div>
           )}
         </div>
