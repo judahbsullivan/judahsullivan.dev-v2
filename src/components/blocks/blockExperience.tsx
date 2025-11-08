@@ -149,17 +149,17 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
       ref={sectionRef}
       id="block-list"
       fullWidth
-      className="flex flex-col gap-12 px-6 py-52 text-pretty"
+      className="flex flex-col gap-12 px-6 py-52 text-pretty text-left"
     >
-      <header className="w-full text-center">
-        <h2 className="experience-tagline text-xl relative uppercase tracking-wider text-neutral-600 mb-1">
+      <header className="w-full text-left flex flex-col items-start">
+        <h2 className="experience-tagline text-left text-xl relative uppercase tracking-wider text-neutral-600 mb-1">
           {tagline}
         </h2>
-        <h3 className="experience-headline text-5xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter overflow-hidden">
+        <h3 className="experience-headline text-left text-5xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter overflow-hidden">
           {headline}
         </h3>
-        <div className="flex gap-6 flex-wrap mt-5 max-w-2xl mx-auto justify-center">
-          <p className="experience-description text-2xl font-thin">
+        <div className="flex gap-6 text-left items-start w-full flex-wrap mt-5 max-w-2xl justify-start">
+          <p className="experience-description text-2xl  font-thin">
             {description}
           </p>
         </div>
@@ -198,7 +198,7 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 items-start">
                   {/* Company/Date Section */}
-                  <div className={`duration ${isEven ? 'date-label-left md:text-right md:pr-6' : 'duration-right md:text-left md:pl-6 md:order-2'} relative`}>
+                  <div className={`duration text-left ${isEven ? 'date-label-left md:text-right md:pr-6' : 'duration-right md:text-left md:pl-6 md:order-2'} relative`}>
                     <div className="mb-4">
                       <h5 className="timeline-company text-2xl md:text-3xl font-semibold mb-2">
                         {String(job.company || '')}
@@ -210,7 +210,7 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
                   </div>
 
                   {/* Description Section */}
-                  <div className={`event ${isEven ? 'event-description-right md:pl-6' : 'event-description-left md:pr-6 md:order-1'} ${isEven ? 'md:text-left' : 'md:text-right'}`}>
+                  <div className={`event text-left ${isEven ? 'event-description-right md:pl-6' : 'event-description-left md:pr-6 md:order-1'} ${isEven ? 'md:text-left' : 'md:text-right'}`}>
                     <h6 className="timeline-title title text-xl md:text-2xl font-semibold mb-2 capitalize">
                       {String(job.title || '')}
                     </h6>
@@ -223,7 +223,7 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
                       ) : null;
                     })()}
                     {job.bullets && job.bullets.length > 0 && (
-                      <ul className={`timeline-bullets desc-text space-y-2 mb-4 ${isEven ? 'pl-6 text-left list-disc' : 'pr-6 text-right'}`}>
+                      <ul className={`timeline-bullets desc-text space-y-2 mb-4 ${isEven ? 'pl-6 text-left list-disc' : 'pl-6 md:pl-0 md:pr-6 text-left md:text-right'}`}>
                         {job.bullets.map((point, idx) => (
                           <li key={idx} className={`text-base ${!isEven ? 'md:before:content-["•_"] md:before:mr-1' : ''}`}>{point}</li>
                         ))}

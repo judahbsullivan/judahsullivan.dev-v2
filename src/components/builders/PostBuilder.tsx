@@ -1,4 +1,5 @@
 import type { Posts } from "@/directus/utils/types";
+import { DirectusImage } from "@/components/ui/directus-image";
 
 interface PostBuilderProps {
   post?: Posts;
@@ -9,15 +10,47 @@ export default function PostBuilder({ post, posts }: PostBuilderProps) {
   if (post) {
     // Render single post
     return (
-      <article className="px-6 py-12">
-        <header className="max-w-3xl mx-auto mb-8">
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">{post.title}</h1>
-          {post.description && (
-            <p className="mt-3 text-neutral-600 dark:text-neutral-300">{post.description}</p>
+      <article className="bg-white px-4 md:px-16 py-24 space-y-16">
+        {/* Post Header */}
+        <div className="space-y-4 max-w-4xl">
+          {post.published_at && (
+            <p className="text-sm text-gray-500 uppercase tracking-widest">
+              {new Date(post.published_at).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </p>
           )}
-        </header>
-        <div className="prose-theme prose-lg md:prose-xl max-w-3xl mx-auto"
-             dangerouslySetInnerHTML={{ __html: post.content || "" }} />
+          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-gray-900">
+            {post.title}
+          </h1>
+          {post.description && (
+            <p className="text-lg text-gray-600">{post.description}</p>
+          )}
+        </div>
+
+        {/* Featured Image */}
+        {post.image && (
+          <div className="w-full bg-accent rounded-xl flex items-center justify-center">
+            <DirectusImage
+              imageId={
+                typeof post.image === "string"
+                  ? post.image
+                  : (post.image as unknown as { id?: string })?.id || ""
+              }
+              className="object-cover w-full rounded"
+            />
+          </div>
+        )}
+
+        {/* Content */}
+        {post.content && (
+          <div
+            className="prose-theme max-w-7xl mx-auto"
+            dangerouslySetInnerHTML={{ __html: post.content || "" }}
+          />
+        )}
       </article>
     );
   }
