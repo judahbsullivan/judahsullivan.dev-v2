@@ -30,7 +30,8 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
   const sectionRef = useRef<HTMLElement>(null);
   const timelineContainerRef = useRef<HTMLDivElement>(null);
   const lastItemRef = useRef<HTMLDivElement>(null);
-  const [lineHeight, setLineHeight] = useState<number | null>(null);
+  // Initialize to 0 to ensure server/client render match (will be updated in useEffect)
+  const [lineHeight, setLineHeight] = useState<number>(0);
 
   useTextAnimations(
     sectionRef,
@@ -135,93 +136,120 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
       // Travel distance: up to the last dot center
       const maxDotY = dots.length ? Math.max(...dots.map(d => d.y)) : 0;
       // Nudge up a couple pixels so the fill doesn't visually overshoot the last dot
-      const total = (maxDotY ? Math.max(0, maxDotY - 2) : 0) || (typeof lineHeight === 'number' && lineHeight > 0 ? Math.max(0, lineHeight - 2) : 400);
-      ScrollTrigger.create({
-        trigger: container,
-        start: 'top 40%',
-        end: `+=${total}`,
-        onUpdate: (self) => {
-          const h = Math.min(total, total * self.progress);
-          setter(h);
-          // Fill dots as the line reaches them
-          const current = h;
-          dots.forEach((d) => {
-            if (!d.filled && current >= d.y) {
-              d.filled = true;
-              gsap.to(d.inner, {
-                backgroundImage: 'linear-gradient(to right, rgba(59,130,246,0.95), rgba(168,85,247,0.95))',
-                backgroundColor: 'transparent',
-                duration: 0.2,
-                ease: 'power1.out',
-              });
-              gsap.to(d.outer, {
-                backgroundImage: 'linear-gradient(to bottom, rgba(59,130,246,0.2), rgba(168,85,247,0.2))',
-                duration: 0.2,
-                ease: 'power1.out',
-              });
-            } else if (d.filled && current < d.y) {
-              // allow reverse when scrolling up
-              d.filled = false;
-              gsap.to(d.inner, {
-                backgroundImage: 'none',
-                backgroundColor: '#0a0a0a',
-                duration: 0.2,
-                ease: 'power1.out',
-              });
-              gsap.to(d.outer, {
-                backgroundImage: 'none',
-                duration: 0.2,
-                ease: 'power1.out',
-              });
+      const total = (maxDotY ? Math.max(0, maxDotY - 2) : 0) || (lineHeight > 0 ? Math.max(0, lineHeight - 2) : 400);
+      if (total > 0 && Number.isFinite(total) && container && container instanceof Element && document.body.contains(container)) {
+        try {
+          const rect = container.getBoundingClientRect();
+          if (rect.width > 0 || rect.height > 0) {
+            const st = ScrollTrigger.create({
+              trigger: container,
+              start: 'top 40%',
+              end: `+=${total}`,
+              onUpdate: (self) => {
+                const h = Math.min(total, total * self.progress);
+                setter(h);
+                // Fill dots as the line reaches them
+                const current = h;
+                dots.forEach((d) => {
+                  if (!d.filled && current >= d.y) {
+                    d.filled = true;
+                    gsap.to(d.inner, {
+                      backgroundImage: 'linear-gradient(to right, rgba(59,130,246,0.95), rgba(168,85,247,0.95))',
+                      backgroundColor: 'transparent',
+                      duration: 0.2,
+                      ease: 'power1.out',
+                    });
+                    gsap.to(d.outer, {
+                      backgroundImage: 'linear-gradient(to bottom, rgba(59,130,246,0.2), rgba(168,85,247,0.2))',
+                      duration: 0.2,
+                      ease: 'power1.out',
+                    });
+                  } else if (d.filled && current < d.y) {
+                    // allow reverse when scrolling up
+                    d.filled = false;
+                    gsap.to(d.inner, {
+                      backgroundImage: 'none',
+                      backgroundColor: '#0a0a0a',
+                      duration: 0.2,
+                      ease: 'power1.out',
+                    });
+                    gsap.to(d.outer, {
+                      backgroundImage: 'none',
+                      duration: 0.2,
+                      ease: 'power1.out',
+                    });
+                  }
+                });
+              },
+            });
+            // Verify ScrollTrigger was created successfully
+            if (!st) {
+              console.warn('ScrollTrigger.create failed for desktop timeline fill');
             }
-          });
-        },
-      });
+          }
+        } catch (error) {
+          console.warn('Error creating desktop timeline ScrollTrigger:', error);
+        }
+      }
     }
     // Animate fill line with scroll progress (mobile on left)
     const fillElMobile = document.getElementById('timeline-fill-mobile');
     if (fillElMobile) {
       const setterMobile = gsap.quickSetter(fillElMobile, 'height', 'px');
       const maxDotY = dots.length ? Math.max(...dots.map(d => d.y)) : 0;
-      const totalMobile = (maxDotY ? Math.max(0, maxDotY - 2) : 0) || container.scrollHeight || 400;
-      ScrollTrigger.create({
-        trigger: container,
-        start: 'top 25%',
-        end: `+=${totalMobile}`,
-        onUpdate: (self) => {
-          const h = Math.min(totalMobile, totalMobile * self.progress);
-          setterMobile(h);
-          dots.forEach((d) => {
-            if (!d.filled && h >= d.y) {
-              d.filled = true;
-              gsap.to(d.inner, {
-                backgroundImage: 'linear-gradient(to right, rgba(59,130,246,0.95), rgba(168,85,247,0.95))',
-                backgroundColor: 'transparent',
-                duration: 0.2,
-                ease: 'power1.out',
-              });
-              gsap.to(d.outer, {
-                backgroundImage: 'linear-gradient(to bottom, rgba(59,130,246,0.2), rgba(168,85,247,0.2))',
-                duration: 0.2,
-                ease: 'power1.out',
-              });
-            } else if (d.filled && h < d.y) {
-              d.filled = false;
-              gsap.to(d.inner, {
-                backgroundImage: 'none',
-                backgroundColor: '#0a0a0a',
-                duration: 0.2,
-                ease: 'power1.out',
-              });
-              gsap.to(d.outer, {
-                backgroundImage: 'none',
-                duration: 0.2,
-                ease: 'power1.out',
-              });
+      const scrollHeight = container?.scrollHeight || 0;
+      const totalMobile = (maxDotY ? Math.max(0, maxDotY - 2) : 0) || (scrollHeight > 0 ? scrollHeight : 400);
+      if (totalMobile > 0 && Number.isFinite(totalMobile) && container && container instanceof Element && document.body.contains(container)) {
+        try {
+          const rect = container.getBoundingClientRect();
+          if (rect.width > 0 || rect.height > 0) {
+            const st = ScrollTrigger.create({
+              trigger: container,
+              start: 'top 25%',
+              end: `+=${totalMobile}`,
+              onUpdate: (self) => {
+                const h = Math.min(totalMobile, totalMobile * self.progress);
+                setterMobile(h);
+                dots.forEach((d) => {
+                  if (!d.filled && h >= d.y) {
+                    d.filled = true;
+                    gsap.to(d.inner, {
+                      backgroundImage: 'linear-gradient(to right, rgba(59,130,246,0.95), rgba(168,85,247,0.95))',
+                      backgroundColor: 'transparent',
+                      duration: 0.2,
+                      ease: 'power1.out',
+                    });
+                    gsap.to(d.outer, {
+                      backgroundImage: 'linear-gradient(to bottom, rgba(59,130,246,0.2), rgba(168,85,247,0.2))',
+                      duration: 0.2,
+                      ease: 'power1.out',
+                    });
+                  } else if (d.filled && h < d.y) {
+                    d.filled = false;
+                    gsap.to(d.inner, {
+                      backgroundImage: 'none',
+                      backgroundColor: '#0a0a0a',
+                      duration: 0.2,
+                      ease: 'power1.out',
+                    });
+                    gsap.to(d.outer, {
+                      backgroundImage: 'none',
+                      duration: 0.2,
+                      ease: 'power1.out',
+                    });
+                  }
+                });
+              },
+            });
+            // Verify ScrollTrigger was created successfully
+            if (!st) {
+              console.warn('ScrollTrigger.create failed for mobile timeline fill');
             }
-          });
-        },
-      });
+          }
+        } catch (error) {
+          console.warn('Error creating mobile timeline ScrollTrigger:', error);
+        }
+      }
     }
 
     return () => {
@@ -267,7 +295,7 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
       fullWidth
       className="flex flex-col gap-12 px-6 pt-24 text-pretty text-left"
     >
-      <div className="w-full text-left flex flex-col items-start">
+      <header className="w-full text-left flex flex-col items-start">
         <h2 className="experience-tagline text-left text-xl relative uppercase tracking-wider text-neutral-600 mb-1">
           {tagline}
         </h2>
@@ -275,33 +303,29 @@ function BlockExperience({ tagline, headline, description, jobs }: BlockExperien
           {headline}
         </h3>
         <div className="flex gap-6 text-left items-start w-full flex-wrap mt-5 max-w-2xl justify-start">
-          <p className="experience-description text-2xl  font-thin">
+          <p className="experience-description text-2xl font-thin">
             {description}
           </p>
         </div>
-      </div>
+      </header>
 
       <div ref={timelineContainerRef} className="relative max-w-7xl mx-auto w-full pl-8 pr-4 md:px-0">
         {/* Timeline line - stops at last dot (desktop) */}
-        {lineHeight !== null && (
-          <div 
-            className="absolute left-1/2 top-0 w-px border-l-2 border-dashed border-neutral-300 hidden md:block transform -translate-x-1/2"
-            style={{
-              height: `${lineHeight}px`
-            }}
-          />
-        )}
+        <div 
+          className="absolute left-1/2 top-0 w-px border-l-2 border-dashed border-neutral-300 hidden md:block transform -translate-x-1/2"
+          style={{
+            height: `${lineHeight}px`
+          }}
+        />
         {/* Gradient fill line (animated) */}
-        {lineHeight !== null && (
-          <div 
-            id="timeline-fill"
-            className="absolute left-1/2 top-0 hidden md:block transform -translate-x-1/2 w-[3px] rounded-full overflow-hidden"
-            style={{
-              height: '0px',
-              backgroundImage: 'linear-gradient(to bottom, rgba(59,130,246,0.25), rgba(168,85,247,0.25))'
-            }}
-          />
-        )}
+        <div 
+          id="timeline-fill"
+          className="absolute left-1/2 top-0 hidden md:block transform -translate-x-1/2 w-[3px] rounded-full overflow-hidden"
+          style={{
+            height: '0px',
+            backgroundImage: 'linear-gradient(to bottom, rgba(59,130,246,0.25), rgba(168,85,247,0.25))'
+          }}
+        />
         {/* Mobile background line (left side) */}
         <div className="absolute left-2 top-0 bottom-0 w-[2px] bg-neutral-300/60 rounded-full md:hidden" />
         {/* Mobile gradient fill line */}

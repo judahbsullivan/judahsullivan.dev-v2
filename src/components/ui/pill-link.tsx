@@ -34,45 +34,83 @@ export const PillLink = forwardRef<HTMLAnchorElement, PillLinkProps>(
       const button = combinedRef.current;
       if (!button) return;
 
+      // Wait for fonts before SplitText to avoid mis-splitting
+      const runAfterFontsReady = (el: Element, cb: () => void) => {
+        const execute = () => {
+          if ((el as HTMLElement).isConnected) cb();
+        };
+        try {
+          const fontsLike = (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts;
+          const ready = fontsLike?.ready;
+          if (ready && typeof (ready as Promise<unknown>).then === 'function') {
+            (ready as Promise<unknown>).then(execute);
+          } else {
+            requestAnimationFrame(execute);
+          }
+        } catch {
+          requestAnimationFrame(execute);
+        }
+      };
+
+      let split: SplitText | null = null;
+      let tl: gsap.core.Timeline | null = null;
+
       // Find the text span inside the button
-      const buttonText = button.querySelector('span.relative') || button.querySelector('span') || button;
-      
-      // Split text into lines
-      const split = new SplitText(buttonText as Element, {
-        type: 'lines, words',
-        linesClass: 'line',
-        wordsClass: 'word',
-        mask: 'lines',
-        smartWrap: true,
+      const buttonText = (button.querySelector('span.relative') || button.querySelector('span') || button) as Element;
+
+      runAfterFontsReady(buttonText, () => {
+        if (!button.isConnected) return;
+        // Split text into lines
+        split = new SplitText(buttonText, {
+          type: 'lines, words',
+          linesClass: 'line',
+          wordsClass: 'word',
+          mask: 'lines',
+          smartWrap: true,
+        });
+
+        // Set initial states
+        gsap.set(button, { scaleX: 0, transformOrigin: 'left center' });
+        gsap.set(split.lines, { yPercent: 100, opacity: 0 });
+
+        // Create timeline: first scale button, then animate text
+        tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: button,
+            start: 'top 90%',
+            once: true,
+          },
+        });
+
+        // Scale button from left to right
+        tl.to(button, {
+          scaleX: 1,
+          duration: 0.6,
+          ease: 'power3.out',
+        })
+          // Then animate text lines in
+          .to(
+            split.lines,
+            {
+              yPercent: 0,
+              opacity: 1,
+              duration: 0.8,
+              stagger: 0.05,
+              ease: 'power4.out',
+            },
+            '-=0.3'
+          ); // Start text animation slightly before button finishes
       });
 
-      // Set initial states
-      gsap.set(button, { scaleX: 0, transformOrigin: 'left center' });
-      gsap.set(split.lines, { yPercent: 100, opacity: 0 });
-
-      // Create timeline: first scale button, then animate text
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: button,
-          start: 'top 90%',
-          once: true,
-        },
-      });
-
-      // Scale button from left to right
-      tl.to(button, {
-        scaleX: 1,
-        duration: 0.6,
-        ease: 'power3.out',
-      })
-      // Then animate text lines in
-      .to(split.lines, {
-        yPercent: 0,
-        opacity: 1,
-        duration: 0.8,
-        stagger: 0.05,
-        ease: 'power4.out',
-      }, '-=0.3'); // Start text animation slightly before button finishes
+      return () => {
+        if (tl) {
+          tl.scrollTrigger?.kill();
+          tl.kill();
+        }
+        if (split) {
+          split.revert();
+        }
+      };
     }, { scope: combinedRef });
 
     return (

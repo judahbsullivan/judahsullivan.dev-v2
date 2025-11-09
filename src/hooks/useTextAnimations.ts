@@ -181,6 +181,18 @@ export function useTextAnimations(
               })();
               if (!elementsToAnimate || elementsToAnimate.length === 0) return;
 
+              // Remove prohibited ARIA attributes from paragraph elements and their children
+              if (el.tagName === 'P') {
+                el.removeAttribute('role');
+                el.removeAttribute('aria-label');
+                el.removeAttribute('aria-labelledby');
+                elementsToAnimate.forEach((child) => {
+                  child.removeAttribute('role');
+                  child.removeAttribute('aria-label');
+                  child.removeAttribute('aria-labelledby');
+                });
+              }
+
               if (isInView(el)) {
                 maybeStartGate();
                 pendingToComplete += 1;
@@ -286,7 +298,19 @@ export function useTextAnimations(
   
                   const lines = split ? (split.lines as HTMLElement[]) : (Array.from((el as Element).querySelectorAll('.line')) as HTMLElement[]);
                   if (!lines || lines.length === 0) return;
-  
+
+                  // Remove prohibited ARIA attributes from paragraph elements and their children
+                  if (el.tagName === 'P') {
+                    el.removeAttribute('role');
+                    el.removeAttribute('aria-label');
+                    el.removeAttribute('aria-labelledby');
+                    lines.forEach((line) => {
+                      line.removeAttribute('role');
+                      line.removeAttribute('aria-label');
+                      line.removeAttribute('aria-labelledby');
+                    });
+                  }
+
                   gsap.from(lines, {
                     yPercent: 100,
                     opacity: 0,

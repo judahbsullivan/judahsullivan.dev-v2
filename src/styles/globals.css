@@ -135,6 +135,27 @@
     @apply prose-code:text-foreground prose-pre:bg-muted;
     @apply prose-img:rounded-lg;
   }
+  
+  /* Ensure proper contrast for animation elements */
+  .line {
+    color: inherit;
+  }
+  
+  /* Ensure text on muted backgrounds has proper contrast */
+  .bg-muted,
+  [class*="bg-muted"] {
+    color: var(--foreground);
+  }
+  
+  .bg-muted p,
+  .bg-muted h1,
+  .bg-muted h2,
+  .bg-muted h3,
+  .bg-muted h4,
+  .bg-muted h5,
+  .bg-muted h6 {
+    color: var(--foreground);
+  }
 }
 
 .carousel-track {

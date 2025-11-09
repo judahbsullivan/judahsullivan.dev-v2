@@ -74,8 +74,8 @@ export function MasonGrid({ posts, className, base = 'blog' }: MasonGridProps) {
   return (
     <div ref={gridRef} className={`mason-grid w-full ${className || ''}`}>
         <div className="columns-1 sm:columns-2 lg:columns-3" style={{ columnGap: '1rem' }}>
-          {posts.map((post) => (
-            <div key={post.slug || Math.random()} className="mason-item opacity-0 translate-y-4 mb-6 break-inside-avoid rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+          {posts.map((post, index) => (
+            <div key={post.slug || `post-${index}`} className="mason-item opacity-0 translate-y-4 mb-6 break-inside-avoid rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
               <Link 
                 href={`/${base}/${post.slug}`} 
                 className="group block relative"

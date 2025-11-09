@@ -32,7 +32,7 @@ function BlockHero(props: BlockHeroProps) {
       fullWidth
       className="relative overflow-hidden"
     >
-      <div className="flex w-full px-6 items-center flex-col justify-between h-screen md:pt-10 pb-6 gap-24 relative z-10">
+      <div className="flex w-full px-6 items-center flex-col justify-between h-screen pt-10 pb-6 gap-24 relative z-10">
         <Headline 
           as="h1"
           className="hero-headline overflow-hidden transition-transform  tracking-tighter text-7xl md:text-[10vw] inline-block text-pretty break-keep leading-[.99] uppercase  text-center"
@@ -45,9 +45,9 @@ function BlockHero(props: BlockHeroProps) {
             <h2 className="hero-tagline text-lg uppercase tracking-wider text-neutral-500 mb-1">
               Software Engineer | Frontend Architect | Digital Craftsman
             </h2>
-            <h4 className="hero-name text-4xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter">
+            <h2 className="hero-name text-4xl md:text-[5vw] uppercase font-light leading-tight tracking-tighter">
               Judah Sullivan
-            </h4>
+            </h2>
             <p className="hero-description">Located Currently in Houston, TX</p>
             <p className="hero-description">Currently Open To Work! </p>
 
